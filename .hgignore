@@ -1,0 +1,6 @@
+syntax: glob
+
+.vs
+bin
+obj
+*.user
