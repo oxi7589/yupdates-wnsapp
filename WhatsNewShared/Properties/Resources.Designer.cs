@@ -106,7 +106,16 @@ namespace WhatsNewShared.Properties {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLine&quot;&gt;&lt;div class=&quot;repDate&quot;&gt;{0}&lt;/div&gt; | {1}.
+        ///   Ищет локализованную строку, похожую на {0}.
+        /// </summary>
+        internal static string ReportLineStrresPathNoUrl {
+            get {
+                return ResourceManager.GetString("ReportLineStrresPathNoUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLine&quot; aria-haspopup=&quot;true&quot;&gt;&lt;div class=&quot;repDate&quot;&gt;{0}&lt;/div&gt; | {1}.
         /// </summary>
         internal static string ReportLineStrresStart {
             get {

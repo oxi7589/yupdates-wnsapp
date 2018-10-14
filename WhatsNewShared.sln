@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WnsHandler.MEGA", "WnsHandl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WnsHandler.GDrive", "WnsHandler.GDrive\WnsHandler.GDrive.csproj", "{894C577D-CE13-4F84-A0F2-400C3461D9EB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WnsHandler.File", "WnsHandler.File\WnsHandler.File.csproj", "{51BD8351-DCCE-4D75-B79E-699A0227CDEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{894C577D-CE13-4F84-A0F2-400C3461D9EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{894C577D-CE13-4F84-A0F2-400C3461D9EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{894C577D-CE13-4F84-A0F2-400C3461D9EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51BD8351-DCCE-4D75-B79E-699A0227CDEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51BD8351-DCCE-4D75-B79E-699A0227CDEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51BD8351-DCCE-4D75-B79E-699A0227CDEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51BD8351-DCCE-4D75-B79E-699A0227CDEF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
