@@ -132,8 +132,11 @@
   <data name="ReportLineStrresPath" xml:space="preserve">
     <value>&lt;a href="{0}"&gt;{1}&lt;/a&gt;</value>
   </data>
+  <data name="ReportLineStrresPathNoUrl" xml:space="preserve">
+    <value>{0}</value>
+  </data>
   <data name="ReportLineStrresStart" xml:space="preserve">
-    <value>&lt;div class="repLine"&gt;&lt;div class="repDate"&gt;{0}&lt;/div&gt; | {1}</value>
+    <value>&lt;div class="repLine" aria-haspopup="true"&gt;&lt;div class="repDate"&gt;{0}&lt;/div&gt; | {1}</value>
   </data>
   <data name="ReportOverflow" xml:space="preserve">
     <value>&lt;div class="repLine"&gt;. . .&lt;/div&gt;</value>

@@ -188,7 +188,7 @@ namespace WhatsNewShared
 
             foreach (var r in Report)
             {
-                if (r.RootRec.Rec != prevRoot || r.UpdateFinished.AddHours(-1) > prevDate)
+                if (r.RootRec.Rec != prevRoot || prevDate.AddHours(-1) > r.UpdateFinished)
                 {
                     // new group. Write old one to the report
                     if (gCount >= 10)
@@ -213,11 +213,17 @@ namespace WhatsNewShared
                 );
                 if (r.ParentPath!="")
                 {
-                    group += String.Format(
-                        Properties.Resources.ResourceManager.GetString("ReportLineStrresPath"),
-                        r.ParentUrl,
-                        r.ParentPath
-                    );
+                    if (r.ParentUrl != "")
+                        group += String.Format(
+                            Properties.Resources.ResourceManager.GetString("ReportLineStrresPath"),
+                            r.ParentUrl,
+                            r.ParentPath
+                        );
+                    else
+                        group += String.Format(
+                            Properties.Resources.ResourceManager.GetString("ReportLineStrresPathNoUrl"),
+                            r.ParentPath
+                        );
                 }
                 if (r.NumberOfUpdates > 0)
                 {
@@ -248,7 +254,7 @@ namespace WhatsNewShared
             foreach (string drive in RootDirs)
                 DrivesList += drive + "\n";
 
-            string SystemStatus = String.Format("ok [v.1.2.2 on {0}]", Environment.OSVersion.ToString());
+            string SystemStatus = String.Format("ok [v.1.2.3 on {0}]", Environment.OSVersion.ToString());
             foreach (var shPair in SpecialHandlers)
             {
                 SystemStatus += ("<br>Plugin[" + shPair.Key + ", "+ shPair.Value.GetVersion() +"]: " 
@@ -300,7 +306,7 @@ namespace WhatsNewShared
 
         public void Run()
         {
-            Console.WriteLine("WNS 1.2.2 running from " + GetExecutingDirectoryName());
+            Console.WriteLine("WNS 1.2.3 running from " + GetExecutingDirectoryName());
 
             #region reading config files and templates
             try
