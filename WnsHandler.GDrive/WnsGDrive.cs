@@ -272,7 +272,7 @@ namespace WnsHandler.GDrive
 
         public string GetVersion()
         {
-            return "v.1.1 beta";
+            return "v.1.2";
         }
     }
 }

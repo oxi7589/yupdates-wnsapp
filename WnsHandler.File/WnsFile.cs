@@ -102,6 +102,10 @@ namespace WnsHandler.File
                                     }
                                 }
                                 break;
+                            case "showall":
+                            case "nowrap":
+                                if (rr != null) rr.ForceShowAll = true;
+                                break;
                             case "rem":
                                 break;
                         }
@@ -125,7 +129,7 @@ namespace WnsHandler.File
 
         public string GetVersion()
         {
-            return "v.1.0";
+            return "v.1.1";
         }
 
         public void Initialize(string workDir, string exeDir, DateTime wayTooLongAgo)
