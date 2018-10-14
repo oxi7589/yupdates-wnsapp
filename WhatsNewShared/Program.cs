@@ -206,11 +206,18 @@ namespace WhatsNewShared
 
                 gCount++; prevDate = r.UpdateFinished; prevRoot = r.RootRec.Rec;
 
-                group += String.Format(
-                    Properties.Resources.ResourceManager.GetString("ReportLineStrresStart"),
-                    r.UpdateFinished.ToString("s") + "Z", // record date
-                    r.RootRec.Rec // root (or the only only) link
-                );
+                if (!r.ForceShowAll)
+                    group += String.Format(
+                        Properties.Resources.ResourceManager.GetString("ReportLineStrresStart"),
+                        r.UpdateFinished.ToString("s") + "Z", // record date
+                        r.RootRec.Rec // root (or the only only) link
+                    );
+                else
+                    group += String.Format(
+                        Properties.Resources.ResourceManager.GetString("ReportLineStrresStartShowAll"),
+                        r.UpdateFinished.ToString("s") + "Z", // record date
+                        r.RootRec.Rec // root (or the only only) link
+                    );
                 if (r.ParentPath!="")
                 {
                     if (r.ParentUrl != "")
@@ -254,7 +261,7 @@ namespace WhatsNewShared
             foreach (string drive in RootDirs)
                 DrivesList += drive + "\n";
 
-            string SystemStatus = String.Format("ok [v.1.2.3 on {0}]", Environment.OSVersion.ToString());
+            string SystemStatus = String.Format("ok [v.1.2.4 on {0}]", Environment.OSVersion.ToString());
             foreach (var shPair in SpecialHandlers)
             {
                 SystemStatus += ("<br>Plugin[" + shPair.Key + ", "+ shPair.Value.GetVersion() +"]: " 
@@ -306,7 +313,7 @@ namespace WhatsNewShared
 
         public void Run()
         {
-            Console.WriteLine("WNS 1.2.3 running from " + GetExecutingDirectoryName());
+            Console.WriteLine("WNS 1.2.4 running from " + GetExecutingDirectoryName());
 
             #region reading config files and templates
             try

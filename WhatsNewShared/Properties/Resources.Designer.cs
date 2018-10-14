@@ -124,6 +124,15 @@ namespace WhatsNewShared.Properties {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLineSA&quot;&gt;&lt;div class=&quot;repDate&quot;&gt;{0}&lt;/div&gt; | {1}.
+        /// </summary>
+        internal static string ReportLineStrresStartShowAll {
+            get {
+                return ResourceManager.GetString("ReportLineStrresStartShowAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLine&quot;&gt;. . .&lt;/div&gt;.
         /// </summary>
         internal static string ReportOverflow {

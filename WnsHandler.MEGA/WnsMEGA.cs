@@ -142,7 +142,7 @@ namespace WnsHandler.MEGA
 
         public string GetVersion()
         {
-            return "v.0.1 alpha";
+            return "v.0.2";
         }
     }
 }

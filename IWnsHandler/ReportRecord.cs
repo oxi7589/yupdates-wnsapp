@@ -17,6 +17,7 @@ namespace WhatsNewShared
         public string ParentUrl = "err";
         public string ParentPath = "err";
         public int NumberOfUpdates = -1;
+        public bool ForceShowAll = false;
         public string CustomLine = "";
         public RootRecord RootRec;
     }
