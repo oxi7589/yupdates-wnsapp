@@ -140,5 +140,68 @@ namespace WhatsNewShared.Properties {
                 return ResourceManager.GetString("ReportOverflow", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на ({0} file{1}).
+        /// </summary>
+        internal static string wns13_ReportBodyCounter {
+            get {
+                return ResourceManager.GetString("wns13_ReportBodyCounter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на s.
+        /// </summary>
+        internal static string wns13_ReportBodyCounterPlural {
+            get {
+                return ResourceManager.GetString("wns13_ReportBodyCounterPlural", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на {1}.
+        /// </summary>
+        internal static string wns13_ReportBodySimple {
+            get {
+                return ResourceManager.GetString("wns13_ReportBodySimple", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на &lt;a href=&quot;{0}&quot;&gt;{1}&lt;/a&gt;.
+        /// </summary>
+        internal static string wns13_ReportBodyUrl {
+            get {
+                return ResourceManager.GetString("wns13_ReportBodyUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLine&quot;&gt;&lt;div class=&quot;repDate&quot;&gt;{0}&lt;/div&gt; | {1}&lt;/div&gt;.
+        /// </summary>
+        internal static string wns13_ReportLineAtom {
+            get {
+                return ResourceManager.GetString("wns13_ReportLineAtom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLine&quot; aria-haspopup=&quot;true&quot;&gt;&lt;div class=&quot;repDate&quot;&gt;{0}&lt;/div&gt; | {1}&lt;/div&gt;.
+        /// </summary>
+        internal static string wns13_ReportLineDefault {
+            get {
+                return ResourceManager.GetString("wns13_ReportLineDefault", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLineSA&quot;&gt;&lt;div class=&quot;repDate&quot;&gt;{0}&lt;/div&gt; | {1} &lt;/div&gt;.
+        /// </summary>
+        internal static string wns13_ReportLineNonCollapsible {
+            get {
+                return ResourceManager.GetString("wns13_ReportLineNonCollapsible", resourceCulture);
+            }
+        }
     }
 }

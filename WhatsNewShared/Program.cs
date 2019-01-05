@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web.Script.Serialization;
 
 namespace WhatsNewShared
 {
@@ -65,6 +66,12 @@ namespace WhatsNewShared
 
             return null;
         }
+    }
+
+    public class FeedState
+    {
+        public ulong HashCounter { get; set; }
+        public List<string> Entries { get; set; }
     }
 
     internal class UpdateChecker
@@ -171,6 +178,122 @@ namespace WhatsNewShared
             }
         }
 
+        void UpdateFeed(List<string> atomRecordsList)
+        {
+            var atomRecordsListPrev = new List<string>();
+
+            // ATOM generation
+            string recordsListPath = Path.Combine(UsrDirectory, "recordslist.json");
+            string recordsListAtomPath = Path.Combine(UsrDirectory, "recordslist.atom.json");
+            string atomTemplateBodyPath = Path.Combine(ExeDirectory, "atombody.xml");
+            string atomTemplateEntryPath = Path.Combine(ExeDirectory, "atomentry.xml");
+            string atomResultPath = Path.Combine(UsrDirectory, "latest.atom.xml");
+
+            string atomTemplateBody = "";
+            string atomTemplateEntry = "";
+
+            if (File.Exists(atomTemplateBodyPath)) atomTemplateBody = File.ReadAllText(atomTemplateBodyPath);
+            if (File.Exists(atomTemplateEntryPath)) atomTemplateEntry = File.ReadAllText(atomTemplateEntryPath);
+            if (atomTemplateBody.Length > 0 && atomTemplateEntry.Length > 0)
+            {
+                var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
+
+                if (File.Exists(recordsListPath))
+                {
+                    try
+                    {
+                        atomRecordsListPrev = serializer.Deserialize<List<string>>(File.ReadAllText(recordsListPath));
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Atom :: Deserialization failed. Error: " + e.Message);
+                        atomRecordsListPrev = new List<string>();
+                    }
+                }
+                try
+                {
+                    File.WriteAllText(recordsListPath, serializer.Serialize(atomRecordsList));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Atom ::Serialization failed. Error: " + e.Message);
+                }
+
+                var newRecs = atomRecordsList.Except(atomRecordsListPrev);
+
+                if (newRecs.Count() > 0)
+                {
+                    Console.WriteLine("Atom :: New records count = " + newRecs.Count().ToString());
+
+                    // read feed state
+                    FeedState fs = null;
+                    if (File.Exists(recordsListAtomPath))
+                    {
+                        try
+                        {
+                            fs = serializer.Deserialize<FeedState>(File.ReadAllText(recordsListAtomPath));
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("Atom :: Deserialization failed. Error: " + e.Message);
+                            fs = null;
+                        }
+                    }
+                    if (fs == null)
+                    {
+                        fs = new FeedState();
+                        fs.HashCounter = 1000;
+                        fs.Entries = new List<string>();
+                    }
+
+                    // actualize
+                    string feedInnerHtml = "";
+                    foreach (string rec in newRecs)
+                        feedInnerHtml += rec;
+                    fs.HashCounter += 1;
+                    fs.Entries.Insert(0,
+                        string.Format(atomTemplateEntry,
+                            fs.HashCounter.ToString(), //hash
+                            DateTime.Now.ToUniversalTime().ToString("s") + "Z", //updated
+                            feedInnerHtml //html
+                        )
+                    );
+                    while (fs.Entries.Count() > 10)
+                        fs.Entries.RemoveAt(fs.Entries.Count() - 1);
+
+                    // write xml
+                    string allXmlEntries = "";
+                    foreach (var entry in fs.Entries)
+                        allXmlEntries += entry;
+
+                    File.WriteAllText(
+                        atomResultPath,
+                        String.Format(
+                            atomTemplateBody,
+                            DateTime.Now.ToUniversalTime().ToString("s") + "Z", //updated
+                            allXmlEntries // entries
+                        )
+                    );
+
+                    // dump feed state back
+                    try
+                    {
+                        File.WriteAllText(recordsListAtomPath, serializer.Serialize(fs));
+                        Console.WriteLine("Atom :: ok");
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Atom :: Serialization failed. Error: " + e.Message);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Atom :: No changes, no need to update feed");
+                }
+            }
+            // end of ATOM generation
+        }
+
         void MakeReport()
         {
             string rep = PageHeader;
@@ -185,6 +308,9 @@ namespace WhatsNewShared
             DateTime prevDate = DateTime.Now;
             string prevRoot = "nil";
             int gCount = 0;
+
+            // records formatted for Atom/rss
+            List<string> atomRecordsList = new List<string>();
 
             foreach (var r in Report)
             {
@@ -206,45 +332,63 @@ namespace WhatsNewShared
 
                 gCount++; prevDate = r.UpdateFinished; prevRoot = r.RootRec.Rec;
 
+                // current report line
+                string currentline = "";
+                // :: body
+                if (r.ParentPath != "")
+                {
+                    currentline = String.Format(
+                            r.ParentUrl != ""
+                                ? Properties.Resources.ResourceManager.GetString("wns13_ReportBodyUrl")
+                                : Properties.Resources.ResourceManager.GetString("wns13_ReportBodySimple"),
+                            r.ParentUrl, r.ParentPath
+                        );
+                }
+                // :: counter
+                if (r.NumberOfUpdates > 0)
+                {
+                    if (currentline != "") currentline += " ";
+                    currentline += String.Format(
+                        Properties.Resources.ResourceManager.GetString("wns13_ReportBodyCounter"),
+                        r.NumberOfUpdates,
+                        r.NumberOfUpdates == 1
+                            ? ""
+                            : Properties.Resources.ResourceManager.GetString("wns13_ReportBodyCounterPlural")
+                    );
+                }
+                // :: join root and body
+                if (currentline == "")
+                    currentline = r.RootRec.Rec;
+                else
+                    currentline = r.RootRec.Rec + " " + currentline; 
+                // :: wrap for HTML report
                 if (!r.ForceShowAll)
                     group += String.Format(
-                        Properties.Resources.ResourceManager.GetString("ReportLineStrresStart"),
+                        Properties.Resources.ResourceManager.GetString("wns13_ReportLineNonCollapsible"),
                         r.UpdateFinished.ToString("s") + "Z", // record date
-                        r.RootRec.Rec // root (or the only only) link
+                        currentline // line root+body
                     );
                 else
                     group += String.Format(
-                        Properties.Resources.ResourceManager.GetString("ReportLineStrresStartShowAll"),
+                        Properties.Resources.ResourceManager.GetString("wns13_ReportLineDefault"),
                         r.UpdateFinished.ToString("s") + "Z", // record date
-                        r.RootRec.Rec // root (or the only only) link
+                        currentline // line root+body
                     );
-                if (r.ParentPath!="")
-                {
-                    if (r.ParentUrl != "")
-                        group += String.Format(
-                            Properties.Resources.ResourceManager.GetString("ReportLineStrresPath"),
-                            r.ParentUrl,
-                            r.ParentPath
-                        );
-                    else
-                        group += String.Format(
-                            Properties.Resources.ResourceManager.GetString("ReportLineStrresPathNoUrl"),
-                            r.ParentPath
-                        );
-                }
-                if (r.NumberOfUpdates > 0)
-                {
-                    group += String.Format(
-                        Properties.Resources.ResourceManager.GetString("ReportLineStrresCount"),
-                        r.NumberOfUpdates
-                    );
-                }
-                group += Properties.Resources.ResourceManager.GetString("ReportLineStrresEnd");
+                // :: wrap for Atom/RSS
+                atomRecordsList.Add(
+                    String.Format(
+                        Properties.Resources.ResourceManager.GetString("wns13_ReportLineAtom"),
+                        r.UpdateFinished.ToString(), // record date
+                        currentline // line root+body
+                    )
+                );
 
                 // too much stuff, ignore anything following
                 if (group.Length + rep.Length > 48000 && overflow == 0) { overflow = 1; }
                 if (group.Length + rep.Length > 100000) { overflow2 = true; break; }
             }
+
+            UpdateFeed(atomRecordsList);
 
             // add last group
             if (gCount >= 10)
@@ -261,7 +405,7 @@ namespace WhatsNewShared
             foreach (string drive in RootDirs)
                 DrivesList += drive + "\n";
 
-            string SystemStatus = String.Format("ok [v.1.2.4 on {0}]", Environment.OSVersion.ToString());
+            string SystemStatus = String.Format("ok [v.1.3.0 on {0}]", Environment.OSVersion.ToString());
             foreach (var shPair in SpecialHandlers)
             {
                 SystemStatus += ("<br>Plugin[" + shPair.Key + ", "+ shPair.Value.GetVersion() +"]: " 
@@ -313,7 +457,7 @@ namespace WhatsNewShared
 
         public void Run()
         {
-            Console.WriteLine("WNS 1.2.4 running from " + GetExecutingDirectoryName());
+            Console.WriteLine("WNS 1.3.0 running from " + GetExecutingDirectoryName());
 
             #region reading config files and templates
             try

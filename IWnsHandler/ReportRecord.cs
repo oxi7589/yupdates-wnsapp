@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace WhatsNewShared
 {
@@ -14,11 +12,10 @@ namespace WhatsNewShared
     public class ReportRecord
     {
         public DateTime UpdateFinished;
-        public string ParentUrl = "err";
-        public string ParentPath = "err";
+        public string ParentUrl = "#";
+        public string ParentPath = "#";
         public int NumberOfUpdates = -1;
         public bool ForceShowAll = false;
-        public string CustomLine = "";
         public RootRecord RootRec;
     }
 }
