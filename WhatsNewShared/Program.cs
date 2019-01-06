@@ -122,7 +122,7 @@ namespace WhatsNewShared
                     {
                         if (!handler.Initialized())
                         {
-                            handler.Initialize(UsrDirectory, GetExecutingDirectoryName(), wayTooLongAgo);
+                            handler.Initialize(UsrDirectory, GetExecutingDirectoryName(), wayTooLongAgo.AddDays(-1));
                             if (!handler.Initialized())
                             {
                                 SpecialHandlers.Remove(key);
@@ -133,7 +133,8 @@ namespace WhatsNewShared
                         var crawlResults = handler.Crawl(pieces[1]);
                         if (crawlResults != null)
                             foreach (var cr in crawlResults)
-                                Report.Add(cr);
+                                if (cr.UpdateFinished > wayTooLongAgo)
+                                    Report.Add(cr);
                     }
                     catch (Exception e)
                     {
@@ -405,7 +406,7 @@ namespace WhatsNewShared
             foreach (string drive in RootDirs)
                 DrivesList += drive + "\n";
 
-            string SystemStatus = String.Format("ok [v.1.3.0 on {0}]", Environment.OSVersion.ToString());
+            string SystemStatus = String.Format("ok [v.1.3.1 on {0}]", Environment.OSVersion.ToString());
             foreach (var shPair in SpecialHandlers)
             {
                 SystemStatus += ("<br>Plugin[" + shPair.Key + ", "+ shPair.Value.GetVersion() +"]: " 
@@ -457,7 +458,7 @@ namespace WhatsNewShared
 
         public void Run()
         {
-            Console.WriteLine("WNS 1.3.0 running from " + GetExecutingDirectoryName());
+            Console.WriteLine("WNS 1.3.1 running from " + GetExecutingDirectoryName());
 
             #region reading config files and templates
             try
