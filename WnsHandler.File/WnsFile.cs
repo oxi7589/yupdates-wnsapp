@@ -70,7 +70,7 @@ namespace WnsHandler.File
                                     lastRootContents = newRootStr;
                                     root = new RootRecord
                                     {
-                                        Rec = newRootStr
+                                        Rec = "<span class=\"roots\">" + newRootStr + "</span>"
                                     };
                                 }
                                 if (rr != null) rr.RootRec = root;
@@ -129,7 +129,7 @@ namespace WnsHandler.File
 
         public string GetVersion()
         {
-            return "v.1.1";
+            return "v.1.2";
         }
 
         public void Initialize(string workDir, string exeDir, DateTime wayTooLongAgo)
