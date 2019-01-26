@@ -189,6 +189,7 @@ namespace WhatsNewShared
             string atomTemplateBodyPath = Path.Combine(ExeDirectory, "atombody.xml");
             string atomTemplateEntryPath = Path.Combine(ExeDirectory, "atomentry.xml");
             string atomResultPath = Path.Combine(UsrDirectory, "latest.atom.xml");
+            string updateMarkerPath = Path.Combine(UsrDirectory, "recordslist.wnsm");
 
             string atomTemplateBody = "";
             string atomTemplateEntry = "";
@@ -261,6 +262,8 @@ namespace WhatsNewShared
                     );
                     while (fs.Entries.Count() > 10)
                         fs.Entries.RemoveAt(fs.Entries.Count() - 1);
+
+                    File.WriteAllText(updateMarkerPath, feedInnerHtml);
 
                     // write xml
                     string allXmlEntries = "";
