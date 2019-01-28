@@ -131,6 +131,7 @@ namespace WnsHandler.GDrive
             {
                 var fileModifyDates = parentDatesListPair.Value;
                 fileModifyDates.Sort();
+                int firstIndex = 0;
                 int cnt = 0;
                 for (int i = 0; i < fileModifyDates.Count; i++)
                 {
@@ -144,10 +145,12 @@ namespace WnsHandler.GDrive
                             ParentUrl = "https://drive.google.com/drive/folders/" + parentDatesListPair.Key,
                             ParentPath = DirectoryNames[parentDatesListPair.Key]
                                 .Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;"),
-                            RootRec = Root
+                            RootRec = Root,
+                            FileDateTimes = fileModifyDates.GetRange(firstIndex, cnt)
                         };
                         Report.Add(rr);
                         cnt = 0;
+                        firstIndex = i + 1;
                     }
                 }
             }
@@ -177,7 +180,7 @@ namespace WnsHandler.GDrive
             try
             {
                 var pieces = parent.Split(new[] { ' ' }, 2);
-                Console.WriteLine("[GDrive] Processing " + pieces[0]);
+                Console.WriteLine("GDrive :: Processing " + pieces[0]);
                 DirectoryNames[pieces[0]] = "";//pieces[1]; // root name
                 Root = new RootRecord
                 {
@@ -187,11 +190,11 @@ namespace WnsHandler.GDrive
                 };
                 DigFolders("'" + pieces[0] + "' in parents");
                 
-                Console.WriteLine("[GDrive] Valid records: " + Report.Count);
+                Console.WriteLine("GDrive :: Valid records: " + Report.Count);
             }
             catch (Exception e)
             {
-                Console.WriteLine("[GDrive] Error: " + e.Message);
+                Console.WriteLine("GDrive :: Error: " + e.Message);
                 FootnoteReport = "completed with errors (unhandled exception)";
             }
             return Report;
@@ -223,7 +226,7 @@ namespace WnsHandler.GDrive
                     "user",
                     CancellationToken.None,
                     new FileDataStore(credPath, true)).Result;
-                Console.WriteLine("Credentials file: " + credPath);
+                Console.WriteLine("GDrive :: Credentials file: " + credPath);
             }
 
             // Create Drive API service.
@@ -237,11 +240,11 @@ namespace WnsHandler.GDrive
                 });
                 if (GdService == null)
                 {
-                    Console.WriteLine("Authorization failed.");
+                    Console.WriteLine("GDrive :: Authorization failed.");
                     authAttempts++;
                     if (authAttempts == 3)
                     {
-                        Console.WriteLine("A complete authorization fuckup, giving up");
+                        Console.WriteLine("GDrive :: A complete authorization fuckup, giving up");
                         FootnoteReport = "authorization failure";
                         break;
                     }
@@ -252,7 +255,7 @@ namespace WnsHandler.GDrive
                 }
                 else
                 {
-                    Console.WriteLine("Authorized.");
+                    Console.WriteLine("GDrive :: Authorized.");
                     FootnoteReport = "ok";
                     InitState = true;
                     break;
@@ -272,7 +275,7 @@ namespace WnsHandler.GDrive
 
         public string GetVersion()
         {
-            return "v.1.2";
+            return "v.1.3";
         }
     }
 }

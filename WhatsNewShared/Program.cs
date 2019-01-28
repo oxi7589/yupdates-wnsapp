@@ -99,6 +99,11 @@ namespace WhatsNewShared
             return ExeDirectory = new FileInfo(location.AbsolutePath).Directory.FullName;
         }
 
+        string GetVersion()
+        {
+            return "v.1.4.0-rc";
+        }
+
         void DigDrive()
         {
             wayTooLongAgo = DateTime.Now.ToUniversalTime().AddDays(-ReportPeriod);
@@ -183,16 +188,19 @@ namespace WhatsNewShared
         {
             var atomRecordsListPrev = new List<string>();
 
-            // ATOM generation
+            // state
             string recordsListPath = Path.Combine(UsrDirectory, "recordslist.json");
             string recordsListAtomPath = Path.Combine(UsrDirectory, "recordslist.atom.json");
+
+            // Atom/XML templates
             string atomTemplateBodyPath = Path.Combine(ExeDirectory, "atombody.xml");
             string atomTemplateEntryPath = Path.Combine(ExeDirectory, "atomentry.xml");
-            string atomResultPath = Path.Combine(UsrDirectory, "latest.atom.xml");
-            string updateMarkerPath = Path.Combine(UsrDirectory, "recordslist.wnsm");
-
             string atomTemplateBody = "";
             string atomTemplateEntry = "";
+            // Atom/XML target path
+            string atomResultPath = Path.Combine(UsrDirectory, "latest.atom.xml");
+            // patch data target path
+            string updateMarkerPath = Path.Combine(UsrDirectory, "recordslist.wnsm"); // data to be pushed to Discord
 
             if (File.Exists(atomTemplateBodyPath)) atomTemplateBody = File.ReadAllText(atomTemplateBodyPath);
             if (File.Exists(atomTemplateEntryPath)) atomTemplateEntry = File.ReadAllText(atomTemplateEntryPath);
@@ -300,6 +308,114 @@ namespace WhatsNewShared
 
         void MakeReport()
         {
+            // load previous report
+//            File.WriteAllText( Path.Combine(UsrDirectory, "prevrepx.json"), Newtonsoft.Json.JsonConvert.SerializeObject(Report));
+            string oldReportPath = Path.Combine(UsrDirectory, "prevrep.json");
+            List<ReportRecord> oldReport = null;
+            if (File.Exists(oldReportPath))
+            {
+                try
+                {
+                    oldReport = Newtonsoft.Json.JsonConvert.DeserializeObject<List<ReportRecord>>(File.ReadAllText(oldReportPath));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("ERROR :: State deserialization failure!");
+                    Console.WriteLine(e.Message);
+                    oldReport = null;
+                }
+            }
+            if (oldReport == null)
+            {
+                oldReport = new List<ReportRecord>();
+            }
+
+            // compare reports and produce a new one
+            
+            var oldReportActualRecords = new List<ReportRecord>();
+            foreach (var oldRecord in oldReport)
+            {
+                // ignore old records that were already expired
+                if (oldRecord.UpdateFinished < wayTooLongAgo)
+                {
+ //                   Console.WriteLine("dbg :: old rec expired");
+                    continue;
+                }
+                // deep copy old rec's DateTime list 
+                var oldRecordDateTimes = new List<DateTime>();
+                oldRecordDateTimes.AddRange(oldRecord.FileDateTimes);
+                // iterate through all new records and erase dates that were found in the new report
+                foreach (var newRecord in Report)
+                {
+                    if ((newRecord.Flags & ReportFlags.NotNew) == ReportFlags.NotNew)
+                    {
+                        continue; // don't care for new recs already proven to be old news
+                    }
+                    if (newRecord.RootRec.Rec == oldRecord.RootRec.Rec
+                        && newRecord.ParentUrl == oldRecord.ParentUrl
+                        && newRecord.ParentPath == oldRecord.ParentPath) // good candidate for further checks (same folder path)
+                    {
+                        var datesIntersection = oldRecordDateTimes.IntersectAll(newRecord.FileDateTimes);
+                        var newRecDateTimes = newRecord.FileDateTimes.ExceptAll(datesIntersection).ToList();
+                        oldRecordDateTimes = oldRecordDateTimes.ExceptAll(datesIntersection).ToList();
+                        if (newRecDateTimes.Count() > 0) // new record has more stuff than the old one
+                        {
+//                            Console.WriteLine("dbg :: new rec has more stuff than the old one");
+                            newRecord.FileDateTimes = newRecDateTimes;
+                            newRecord.UpdateFinished = newRecord.FileDateTimes.Last();
+                            newRecord.NumberOfUpdates = newRecord.FileDateTimes.Count();
+                        }
+                        else // new is not really new
+                        {
+//                            Console.WriteLine("dbg :: new rec is deemed to be old news");
+                            newRecord.Flags |= ReportFlags.NotNew;
+                        }
+                    }
+                }
+                oldRecord.Flags |= ReportFlags.NotNew;
+                if (oldRecordDateTimes.Count == 0) // all entities within old record are also found in the new one(s)
+                {
+//                   Console.WriteLine("dbg :: old rec remains entirely");
+                    oldReportActualRecords.Add(oldRecord);
+                }
+                else if (oldRecordDateTimes.Count == oldRecord.FileDateTimes.Count)
+                {
+ //                   Console.WriteLine("dbg :: old rec is erased entirely");
+                    continue;
+                }
+                else
+                {
+                    oldRecord.FileDateTimes = oldRecord.FileDateTimes.ExceptAll(oldRecordDateTimes).ToList();
+                    oldRecord.UpdateFinished = oldRecord.FileDateTimes.Last();
+                    oldRecord.NumberOfUpdates = oldRecord.FileDateTimes.Count();
+                    oldReportActualRecords.Add(oldRecord);
+ //                   Console.WriteLine("dbg :: old rec remains partially");
+                }
+            }
+
+            var actuallyNewRecords = new List<ReportRecord>();
+            foreach (var newRecord in Report)
+            {
+                if ((newRecord.Flags & ReportFlags.NotNew) != ReportFlags.NotNew) // something actually new
+                {
+                    actuallyNewRecords.Add(newRecord);
+                }
+            }
+
+            Report = actuallyNewRecords;
+            Report.AddRange(oldReportActualRecords);
+
+            try
+            {
+                File.WriteAllText(oldReportPath, Newtonsoft.Json.JsonConvert.SerializeObject(Report));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("ERROR :: Report serialization failed");
+                Console.WriteLine(e.Message);
+            }
+            // make report page
+
             string rep = PageHeader;
 
             const string eoSmallRepMark = "<!--EndOfSmallReport-->";
@@ -312,7 +428,7 @@ namespace WhatsNewShared
             DateTime prevDate = DateTime.Now;
             string prevRoot = "nil";
             int gCount = 0;
-
+            
             // records formatted for Atom/rss
             List<string> atomRecordsList = new List<string>();
 
@@ -364,31 +480,24 @@ namespace WhatsNewShared
                 if (currentline == "")
                     currentline = r.RootRec.Rec;
                 else
-                    currentline = r.RootRec.Rec + " " + currentline; 
+                    currentline = r.RootRec.Rec + " " + currentline;
+                // :: date
+                string date = r.UpdateFinished.ToString("s") + "Z";
+                string dateHumanReadable = r.UpdateFinished.ToString();
+                string dateStub = Properties.Resources.ResourceManager.GetString("wns14_DateStub");
                 // :: wrap for HTML report
-                if (!r.ForceShowAll)
-                    group += String.Format(
-                        Properties.Resources.ResourceManager.GetString("wns13_ReportLineNonCollapsible"),
-                        r.UpdateFinished.ToString("s") + "Z", // record date
-                        currentline // line root+body
-                    );
-                else
-                    group += String.Format(
-                        Properties.Resources.ResourceManager.GetString("wns13_ReportLineDefault"),
-                        r.UpdateFinished.ToString("s") + "Z", // record date
-                        currentline // line root+body
-                    );
-                // :: wrap for Atom/RSS
-                atomRecordsList.Add(
-                    String.Format(
-                        Properties.Resources.ResourceManager.GetString("wns13_ReportLineAtom"),
-                        r.UpdateFinished.ToString(), // record date
-                        currentline // line root+body
-                    )
+                // wrap in repLine div
+                string wrappedLine = String.Format(
+                    Properties.Resources.ResourceManager.GetString("wns14_ReportLine"),
+                    currentline // line root+body
                 );
+                group += wrappedLine.Replace(dateStub, date);
+                // :: wrap for Atom/RSS
+                if ((r.Flags & ReportFlags.NotNew) != ReportFlags.NotNew)
+                    atomRecordsList.Add(wrappedLine.Replace(dateStub, dateHumanReadable));
 
                 // too much stuff, ignore anything following
-                if (group.Length + rep.Length > 48000 && overflow == 0) { overflow = 1; }
+                if (group.Length + rep.Length > 44000 && overflow == 0) { overflow = 1; }
                 if (group.Length + rep.Length > 100000) { overflow2 = true; break; }
             }
 
@@ -409,7 +518,7 @@ namespace WhatsNewShared
             foreach (string drive in RootDirs)
                 DrivesList += drive + "\n";
 
-            string SystemStatus = String.Format("ok [v.1.3.1 on {0}]", Environment.OSVersion.ToString());
+            string SystemStatus = String.Format("ok [" + GetVersion() + " on {0}]", Environment.OSVersion.ToString());
             foreach (var shPair in SpecialHandlers)
             {
                 SystemStatus += ("<br>Plugin[" + shPair.Key + ", "+ shPair.Value.GetVersion() +"]: " 
@@ -461,7 +570,7 @@ namespace WhatsNewShared
 
         public void Run()
         {
-            Console.WriteLine("WNS 1.3.1 running from " + GetExecutingDirectoryName());
+            Console.WriteLine("WNS " + GetVersion() + " running from " + GetExecutingDirectoryName());
 
             #region reading config files and templates
             try

@@ -7,6 +7,13 @@ using WhatsNewShared;
 
 namespace WnsHandler.File
 {
+    /// <summary>
+    /// WNSapp File plugin
+    /// 
+    /// usage: File arg0
+    /// arg0: file to read from (relative path, first EXEDIR+arg0 is checked, then WRKDIR+arg0)
+    /// Records in file must be sorted by date, newest first.
+    /// </summary>
     public class WnsMEGA : IWnsHandler
     {
         private string WorkingDirectory = "";
@@ -97,6 +104,7 @@ namespace WnsHandler.File
                                             throw new Exception("Rootless records are not allowed!");
                                         if (!hasUrl)
                                             rr.ParentUrl = "";
+                                        rr.FileDateTimes.Add(rr.UpdateFinished);
                                         report.Add(rr);
                                         rr = null;
                                     }
@@ -104,7 +112,7 @@ namespace WnsHandler.File
                                 break;
                             case "showall":
                             case "nowrap":
-                                if (rr != null) rr.ForceShowAll = true;
+                                // obsolete
                                 break;
                             case "rem":
                                 break;
@@ -129,7 +137,7 @@ namespace WnsHandler.File
 
         public string GetVersion()
         {
-            return "v.1.2";
+            return "v.1.3";
         }
 
         public void Initialize(string workDir, string exeDir, DateTime wayTooLongAgo)

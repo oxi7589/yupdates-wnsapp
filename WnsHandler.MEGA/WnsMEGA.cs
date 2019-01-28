@@ -8,6 +8,13 @@ using WhatsNewShared;
 
 namespace WnsHandler.MEGA
 {
+    /// <summary>
+    /// WNSapp MEGA.nz crawler
+    /// 
+    /// usage: MEGA arg0 arg1
+    /// arg0: folder hash
+    /// arg1: human readable name
+    /// </summary>
     public class WnsMEGA : IWnsHandler
     {
         private string WorkingDirectory = "";
@@ -43,7 +50,7 @@ namespace WnsHandler.MEGA
                 Root = new RootRecord
                 {
                     Rec =
-                        "<a class=\"rootl\" href=\"https://mega.nz/#" + pieces[0]
+                        "<a class=\"rootl\" href=\"https://yupdates.neocities.org/mg/?" + pieces[0]
                         + "\">" + pieces[1] + "</a> / "
                 };
                 IEnumerable<INode> nodes = ApiClient.GetNodesFromLink(folderLink);
@@ -72,6 +79,7 @@ namespace WnsHandler.MEGA
                     var fileModifyDates = fdlist.Value;
                     fileModifyDates.Sort();
                     int cnt = 0;
+                    int firstIndex = 0;
                     for (int i = 0; i < fileModifyDates.Count; i++)
                     {
                         cnt++;
@@ -81,14 +89,16 @@ namespace WnsHandler.MEGA
                             {
                                 NumberOfUpdates = cnt,
                                 UpdateFinished = fileModifyDates[i],
-                                ParentUrl = "https://mega.nz/#" + pieces[0] + "!" + fdlist.Key,
+                                ParentUrl = "https://yupdates.neocities.org/mg/?" + pieces[0] + "!" + fdlist.Key,
                                 ParentPath =
                                     (DirectoryPaths.ContainsKey(fdlist.Key) ? DirectoryPaths[fdlist.Key] : RootName)
                                     .Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;"),
-                                RootRec = Root
+                                RootRec = Root,
+                                FileDateTimes = fileModifyDates.GetRange(firstIndex, cnt)
                             };
                             Report.Add(rr);
                             cnt = 0;
+                            firstIndex = i + 1;
                         }
                     }
                 }
@@ -117,14 +127,14 @@ namespace WnsHandler.MEGA
             ApiClient.LoginAnonymous();
             if (ApiClient.IsLoggedIn)
             {
-                Console.WriteLine("[MEGA] Logged in as anonymous");
+                Console.WriteLine("MEGA :: Logged in as anonymous");
                 Report = new List<ReportRecord>();
                 InitState = true;
                 FootnoteReport = "ok";
             }
             else
             {
-                Console.WriteLine("[MEGA] Not logged in!");
+                Console.WriteLine("MEGA :: Not logged in!");
                 FootnoteReport = "Not logged in.";
             }
         }
@@ -142,7 +152,7 @@ namespace WnsHandler.MEGA
 
         public string GetVersion()
         {
-            return "v.0.2";
+            return "v.0.3";
         }
     }
 }
