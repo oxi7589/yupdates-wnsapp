@@ -156,13 +156,10 @@
   <data name="wns13_ReportBodyUrl" xml:space="preserve">
     <value>&lt;a href="{0}"&gt;{1}&lt;/a&gt;</value>
   </data>
-  <data name="wns13_ReportLineAtom" xml:space="preserve">
-    <value>&lt;div class="repLine"&gt;&lt;div class="repDate"&gt;{0}&lt;/div&gt; | {1}&lt;/div&gt;</value>
+  <data name="wns14_DateStub" xml:space="preserve">
+    <value>$$WNSDATE$$</value>
   </data>
-  <data name="wns13_ReportLineDefault" xml:space="preserve">
-    <value>&lt;div class="repLine" aria-haspopup="true"&gt;&lt;div class="repDate"&gt;{0}&lt;/div&gt; | {1}&lt;/div&gt;</value>
-  </data>
-  <data name="wns13_ReportLineNonCollapsible" xml:space="preserve">
-    <value>&lt;div class="repLineSA"&gt;&lt;div class="repDate"&gt;{0}&lt;/div&gt; | {1} &lt;/div&gt;</value>
+  <data name="wns14_ReportLine" xml:space="preserve">
+    <value>&lt;div class="repLine"&gt;&lt;span class="repDate"&gt;$$WNSDATE$$&lt;/span&gt; | {0}&lt;/div&gt;</value>
   </data>
 </root>

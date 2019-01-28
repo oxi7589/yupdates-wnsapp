@@ -178,29 +178,20 @@ namespace WhatsNewShared.Properties {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLine&quot;&gt;&lt;div class=&quot;repDate&quot;&gt;{0}&lt;/div&gt; | {1}&lt;/div&gt;.
+        ///   Ищет локализованную строку, похожую на $$WNSDATE$$.
         /// </summary>
-        internal static string wns13_ReportLineAtom {
+        internal static string wns14_DateStub {
             get {
-                return ResourceManager.GetString("wns13_ReportLineAtom", resourceCulture);
+                return ResourceManager.GetString("wns14_DateStub", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLine&quot; aria-haspopup=&quot;true&quot;&gt;&lt;div class=&quot;repDate&quot;&gt;{0}&lt;/div&gt; | {1}&lt;/div&gt;.
+        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLine&quot;&gt;&lt;span class=&quot;repDate&quot;&gt;$$WNSDATE$$&lt;/span&gt; | {0}&lt;/div&gt;.
         /// </summary>
-        internal static string wns13_ReportLineDefault {
+        internal static string wns14_ReportLine {
             get {
-                return ResourceManager.GetString("wns13_ReportLineDefault", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLineSA&quot;&gt;&lt;div class=&quot;repDate&quot;&gt;{0}&lt;/div&gt; | {1} &lt;/div&gt;.
-        /// </summary>
-        internal static string wns13_ReportLineNonCollapsible {
-            get {
-                return ResourceManager.GetString("wns13_ReportLineNonCollapsible", resourceCulture);
+                return ResourceManager.GetString("wns14_ReportLine", resourceCulture);
             }
         }
     }
