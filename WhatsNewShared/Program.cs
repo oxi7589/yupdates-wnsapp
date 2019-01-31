@@ -91,6 +91,12 @@ namespace WhatsNewShared
         string PageHeader = "";
 
         public int ReportPeriod { get; set; }
+        public bool NoSizeLimit { get; set; }
+
+        public UpdateChecker()
+        {
+            NoSizeLimit = false;
+        }
 
         public static string GetExecutingDirectoryName()
         {
@@ -101,7 +107,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.4.0-rc";
+            return "v.1.4.1";
         }
 
         void DigDrive()
@@ -498,7 +504,7 @@ namespace WhatsNewShared
 
                 // too much stuff, ignore anything following
                 if (group.Length + rep.Length > 44000 && overflow == 0) { overflow = 1; }
-                if (group.Length + rep.Length > 100000) { overflow2 = true; break; }
+                if (group.Length + rep.Length > 100000) { if (!NoSizeLimit) { overflow2 = true; break; } }
             }
 
             UpdateFeed(atomRecordsList);
@@ -663,6 +669,8 @@ namespace WhatsNewShared
         {
             int reportPeriod = 32;
 
+            UpdateChecker core = new UpdateChecker();
+
             foreach (string line in args)
             {
                 if (line.Contains("-rp"))
@@ -672,9 +680,12 @@ namespace WhatsNewShared
                         Console.WriteLine(e.Message);
                     }
                 }
+                if (line.Contains("-nolimit"))
+                {
+                    core.NoSizeLimit = true;
+                }
             }
 
-            UpdateChecker core = new UpdateChecker();
             core.ReportPeriod = reportPeriod;
             core.Run();
         }
