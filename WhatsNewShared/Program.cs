@@ -90,6 +90,8 @@ namespace WhatsNewShared
         string PageFooter = "";
         string PageHeader = "";
 
+        bool SomethingHasFailed = false;
+
         public int ReportPeriod { get; set; }
         public bool NoSizeLimit { get; set; }
 
@@ -107,7 +109,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.4.1";
+            return "v.1.5.0";
         }
 
         void DigDrive()
@@ -138,6 +140,7 @@ namespace WhatsNewShared
                             {
                                 SpecialHandlers.Remove(key);
                                 SpecialHandlers.Add(key + "!errNotInit", handler);
+                                SomethingHasFailed = true;
                                 continue;
                             }
                         }
@@ -150,12 +153,17 @@ namespace WhatsNewShared
                     catch (Exception e)
                     {
                         Console.WriteLine("Handler [" + key + "] failed with exception: " + e.Message);
+                        SomethingHasFailed = true;
                     }
                 }
                 else
                 {
                     Console.WriteLine("Warning: default handler no longer supported");
                     //DigFolder(pieces[0], pieces[1]);
+                }
+                foreach (var handlerPair in SpecialHandlers)
+                {
+                    SomethingHasFailed |= handlerPair.Value.HasFailed();
                 }
             }
 
@@ -411,14 +419,17 @@ namespace WhatsNewShared
             Report = actuallyNewRecords;
             Report.AddRange(oldReportActualRecords);
 
-            try
+            if (!SomethingHasFailed)
             {
-                File.WriteAllText(oldReportPath, Newtonsoft.Json.JsonConvert.SerializeObject(Report));
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("ERROR :: Report serialization failed");
-                Console.WriteLine(e.Message);
+                try
+                {
+                    File.WriteAllText(oldReportPath, Newtonsoft.Json.JsonConvert.SerializeObject(Report));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("ERROR :: Report serialization failed");
+                    Console.WriteLine(e.Message);
+                }
             }
             // make report page
 
@@ -507,7 +518,14 @@ namespace WhatsNewShared
                 if (group.Length + rep.Length > 100000) { if (!NoSizeLimit) { overflow2 = true; break; } }
             }
 
-            UpdateFeed(atomRecordsList);
+            if (!SomethingHasFailed)
+            {
+                UpdateFeed(atomRecordsList);
+            }
+            else
+            {
+                Console.WriteLine("Error :: something has failed, not updating the feeds");
+            }
 
             // add last group
             if (gCount >= 10)
@@ -640,6 +658,7 @@ namespace WhatsNewShared
             {
                 Console.WriteLine("Something unexpected went wrong while digging dat drive!");
                 Console.WriteLine(E.Message);
+                SomethingHasFailed = true;
                 return;
             }
             #endregion

@@ -14,5 +14,6 @@ namespace WhatsNewShared
         string ReportStatus();
         string GetShortName();
         string GetVersion();
+        bool HasFailed();
     }
 }
