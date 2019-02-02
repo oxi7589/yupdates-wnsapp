@@ -137,7 +137,7 @@ namespace WnsHandler.File
 
         public string GetVersion()
         {
-            return "v.1.3";
+            return "v.1.4";
         }
 
         public void Initialize(string workDir, string exeDir, DateTime wayTooLongAgo)
@@ -156,6 +156,11 @@ namespace WnsHandler.File
         public string ReportStatus()
         {
             return FootnoteReport;
+        }
+
+        public bool HasFailed()
+        {
+            return false;
         }
     }
 }

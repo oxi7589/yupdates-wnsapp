@@ -20,6 +20,7 @@ namespace WnsHandler.GDrive
         private string ExecutableDirectory = "";
         private DateTime WayTooLongAgo;
         private bool InitState = false;
+        private bool HandlerHasFailed = false;
         private string FootnoteReport = "unused";
 
         static string[] Scopes = { DriveService.Scope.DriveReadonly };
@@ -66,6 +67,7 @@ namespace WnsHandler.GDrive
                             Console.WriteLine("Total fuckup :<");
                             Console.WriteLine(e.Message);
                             FootnoteReport = "completed with errors";
+                            HandlerHasFailed = true;
                             reqFailed = true;
                             break;
                         }
@@ -196,6 +198,7 @@ namespace WnsHandler.GDrive
             {
                 Console.WriteLine("GDrive :: Error: " + e.Message);
                 FootnoteReport = "completed with errors (unhandled exception)";
+                HandlerHasFailed = true;
             }
             return Report;
         }
@@ -246,6 +249,7 @@ namespace WnsHandler.GDrive
                     {
                         Console.WriteLine("GDrive :: A complete authorization fuckup, giving up");
                         FootnoteReport = "authorization failure";
+                        HandlerHasFailed = true;
                         break;
                     }
                     else
@@ -275,7 +279,12 @@ namespace WnsHandler.GDrive
 
         public string GetVersion()
         {
-            return "v.1.3";
+            return "v.1.4";
+        }
+
+        public bool HasFailed()
+        {
+            return HandlerHasFailed;
         }
     }
 }

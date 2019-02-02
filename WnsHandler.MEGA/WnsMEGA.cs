@@ -21,6 +21,7 @@ namespace WnsHandler.MEGA
         private string ExecutableDirectory = "";
         private DateTime WayTooLongAgo;
         private bool InitState = false;
+        private bool HandlerHasFailed = false;
         private string FootnoteReport = "unused";
 
         MegaApiClient ApiClient = null;
@@ -108,6 +109,7 @@ namespace WnsHandler.MEGA
             {
                 Console.WriteLine("[MEGA] Error: " + e.Message);
                 FootnoteReport = "completed with errors";
+                HandlerHasFailed = true;
             }
             return Report;
         }
@@ -136,6 +138,7 @@ namespace WnsHandler.MEGA
             {
                 Console.WriteLine("MEGA :: Not logged in!");
                 FootnoteReport = "Not logged in.";
+                HandlerHasFailed = true;
             }
         }
 
@@ -152,7 +155,12 @@ namespace WnsHandler.MEGA
 
         public string GetVersion()
         {
-            return "v.0.3";
+            return "v.0.4";
+        }
+
+        public bool HasFailed()
+        {
+            return HandlerHasFailed;
         }
     }
 }
