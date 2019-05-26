@@ -109,7 +109,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.5.0";
+            return "v.1.5.1";
         }
 
         void DigDrive()
@@ -437,7 +437,11 @@ namespace WhatsNewShared
 
             const string eoSmallRepMark = "<!--EndOfSmallReport-->";
             const string eoFullRepMark = "<!--EndOfReport-->";
+            const string stLongGroupMark = "<!--StOfGroupCutoff-->";
+            const string eoLongGroupMark = "<!--EndOfGroupCutoff-->";
 
+            // 0 : ok; -1: endof small report is marked already; 1: overflow detected, but not yet marked; 
+            // 2: overflow detected, and a part of the group needs to be erased in the small report
             int overflow = 0;
             bool overflow2 = false;
 
@@ -457,14 +461,23 @@ namespace WhatsNewShared
                     if (gCount >= 10)
                     {
                         rep += String.Format(
-                            Properties.Resources.ResourceManager.GetString("ReportGroupStart"), prevRoot
-                        ) + group + Properties.Resources.ResourceManager.GetString("ReportGroupEnd");
+                            Properties.Resources.ResourceManager.GetString("ReportGroupStart"), 
+                            prevRoot)
+                            + group
+                            + (overflow == 2 ? eoLongGroupMark : "")
+                            + Properties.Resources.ResourceManager.GetString("ReportGroupEnd");
                     }
                     else rep += group;
                     // also mark the end of htmlhouse report
-                    if (overflow == 1) { rep += eoSmallRepMark; overflow = -1; }
+                    if (overflow > 0) { rep += eoSmallRepMark; overflow = -1; }
                     // and reset group-related stuff
                     group = ""; gCount = 0;
+                }
+
+                if (overflow == 1) // ran out of space in the middle of the group
+                {
+                    overflow = 2;
+                    group += stLongGroupMark;
                 }
 
                 gCount++; prevDate = r.UpdateFinished; prevRoot = r.RootRec.Rec;
@@ -514,8 +527,12 @@ namespace WhatsNewShared
                     atomRecordsList.Add(wrappedLine.Replace(dateStub, dateHumanReadable));
 
                 // too much stuff, ignore anything following
-                if (group.Length + rep.Length > 44000 && overflow == 0) { overflow = 1; }
-                if (group.Length + rep.Length > 100000) { if (!NoSizeLimit) { overflow2 = true; break; } }
+                int groupLen8 = Encoding.UTF8.GetByteCount(group);
+                int repLen8 = Encoding.UTF8.GetByteCount(rep);
+                // HTMLhouse limit is 64 KiB, ~10 KiB goes to the footer and header
+                // it's safe to use no more than 50 kB for the body of the report
+                if (groupLen8 + repLen8 > 50000 && overflow == 0) { overflow = 1; }
+                if (groupLen8 + repLen8 > 120000) { if (!NoSizeLimit) { overflow2 = true; break; } }
             }
 
             if (!SomethingHasFailed)
@@ -529,10 +546,18 @@ namespace WhatsNewShared
 
             // add last group
             if (gCount >= 10)
-                rep += String.Format(Properties.Resources.ResourceManager.GetString("ReportGroupStart"), prevRoot)
-                    + group + Properties.Resources.ResourceManager.GetString("ReportGroupEnd");
+            {
+                rep += String.Format(
+                    Properties.Resources.ResourceManager.GetString("ReportGroupStart"),
+                    prevRoot)
+                    + group
+                    + (overflow == 2 ? eoLongGroupMark : "")
+                    + Properties.Resources.ResourceManager.GetString("ReportGroupEnd");
+            }
             else
+            {
                 rep += group;
+            }
 
             // . . . in the end if the length of the report is just waaaaay too huge
             if (overflow2) rep += Properties.Resources.ResourceManager.GetString("ReportOverflow");
@@ -564,14 +589,26 @@ namespace WhatsNewShared
             System.IO.File.WriteAllText(pagepath, rep, Encoding.UTF8);
 
             // cut down report for htmlhouse
-            if (rep.Contains(eoSmallRepMark))
+            if (overflow != 0)
             {
-                var m1 = rep.IndexOf(eoSmallRepMark, 0, StringComparison.Ordinal);
-                var m2 = rep.IndexOf(eoFullRepMark, 0, StringComparison.Ordinal);
-                rep = rep.Remove(m1, m2 - m1 + eoFullRepMark.Length);
-                if (!overflow2)
+                if (rep.Contains(eoLongGroupMark) && rep.Contains(stLongGroupMark))
                 {
-                    rep = rep.Insert(m1, Properties.Resources.ResourceManager.GetString("ReportOverflow"));
+                    var m1 = rep.IndexOf(stLongGroupMark, 0, StringComparison.Ordinal);
+                    var m2 = rep.IndexOf(eoLongGroupMark, 0, StringComparison.Ordinal);
+                    rep = rep.Remove(m1, m2 - m1 + eoLongGroupMark.Length);
+                    rep = rep.Insert(m1, Properties.Resources.ResourceManager.GetString("ReportOverflow")); // "..." mark within group
+                    var m3 = rep.IndexOf(eoFullRepMark, 0, StringComparison.Ordinal);
+                    rep = rep.Insert(m3, eoSmallRepMark);
+                }
+                if (rep.Contains(eoSmallRepMark))
+                {
+                    var m1 = rep.IndexOf(eoSmallRepMark, 0, StringComparison.Ordinal);
+                    var m2 = rep.IndexOf(eoFullRepMark, 0, StringComparison.Ordinal);
+                    rep = rep.Remove(m1, m2 - m1 + eoFullRepMark.Length);
+                    if (!overflow2)
+                    {
+                        rep = rep.Insert(m1, Properties.Resources.ResourceManager.GetString("ReportOverflow"));
+                    }
                 }
             }
 
