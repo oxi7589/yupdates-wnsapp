@@ -109,7 +109,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.5.2.1";
+            return "v.1.5.2.2";
         }
 
         void DigDrive()
@@ -149,7 +149,7 @@ namespace WhatsNewShared
 
                         // extra arguments for the WNS engine itself
                         var wayTooLongAgoLocal = wayTooLongAgo;
-                        var crawlerArgs = pieces[1];
+                        var crawlerArgs = pieces[1].TrimEnd();
                         if (crawlerArgs.Contains(argsSplitter))
                         {
                             var args = crawlerArgs.Split(new string[] { argsSplitter }, StringSplitOptions.RemoveEmptyEntries);
