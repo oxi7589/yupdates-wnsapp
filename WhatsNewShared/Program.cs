@@ -109,7 +109,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.5.1";
+            return "v.1.5.2";
         }
 
         void DigDrive()
@@ -118,6 +118,8 @@ namespace WhatsNewShared
             Console.WriteLine("Digging for files newer than " + wayTooLongAgo.ToString());
 
             Report.Clear();
+
+            string argsSplitter = "<<";
 
             foreach (string root in RootDirs)
             {
@@ -144,10 +146,44 @@ namespace WhatsNewShared
                                 continue;
                             }
                         }
-                        var crawlResults = handler.Crawl(pieces[1]);
+
+                        // extra arguments for the WNS engine itself
+                        var wayTooLongAgoLocal = wayTooLongAgo;
+                        var crawlerArgs = pieces[1];
+                        if (crawlerArgs.Contains(argsSplitter))
+                        {
+                            var args = crawlerArgs.Split(new string[] { argsSplitter }, StringSplitOptions.RemoveEmptyEntries);
+                            crawlerArgs = args[0];
+                            var wnsArgs = args[1].Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+                            for (int i = 0; i < wnsArgs.Count(); i++)
+                            {
+                                switch (wnsArgs[i])
+                                {                                    
+                                    case "NotBefore":
+                                        if (i + 1 < wnsArgs.Count())
+                                        {
+                                            var ticks = long.Parse(wnsArgs[i + 1]);
+                                            var notBefore = new DateTime(ticks);
+                                            wayTooLongAgoLocal = wayTooLongAgoLocal > notBefore ?
+                                                wayTooLongAgo : notBefore;
+                                            Console.WriteLine("Overriding timeframe start point with " + notBefore.ToString()
+                                                + ", new value: " + wayTooLongAgoLocal.ToString());
+                                        }
+                                        else
+                                        {
+                                            throw new Exception("Parameter NotBefore requires one argument: (long)Ticks");
+                                        }
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                        }
+
+                        var crawlResults = handler.Crawl(crawlerArgs);
                         if (crawlResults != null)
                             foreach (var cr in crawlResults)
-                                if (cr.UpdateFinished > wayTooLongAgo)
+                                if (cr.UpdateFinished > wayTooLongAgoLocal)
                                     Report.Add(cr);
                     }
                     catch (Exception e)
