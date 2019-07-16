@@ -109,7 +109,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.5.2";
+            return "v.1.5.2.1";
         }
 
         void DigDrive()
@@ -153,7 +153,7 @@ namespace WhatsNewShared
                         if (crawlerArgs.Contains(argsSplitter))
                         {
                             var args = crawlerArgs.Split(new string[] { argsSplitter }, StringSplitOptions.RemoveEmptyEntries);
-                            crawlerArgs = args[0];
+                            crawlerArgs = args[0].TrimEnd();
                             var wnsArgs = args[1].Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);
                             for (int i = 0; i < wnsArgs.Count(); i++)
                             {
