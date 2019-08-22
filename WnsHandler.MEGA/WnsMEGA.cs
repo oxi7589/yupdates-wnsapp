@@ -51,7 +51,7 @@ namespace WnsHandler.MEGA
                 Root = new RootRecord
                 {
                     Rec =
-                        "<a class=\"rootl\" href=\"https://yupdates.neocities.org/mg/?" + pieces[0]
+                        "<a class=\"rootl\" href=\"/mg/?" + pieces[0]
                         + "\">" + pieces[1] + "</a> / "
                 };
                 IEnumerable<INode> nodes = ApiClient.GetNodesFromLink(folderLink);
