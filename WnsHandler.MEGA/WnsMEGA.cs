@@ -90,7 +90,7 @@ namespace WnsHandler.MEGA
                             {
                                 NumberOfUpdates = cnt,
                                 UpdateFinished = fileModifyDates[i],
-                                ParentUrl = "https://yupdates.neocities.org/mg/?" + pieces[0] + "!" + fdlist.Key,
+                                ParentUrl = "/mg/?" + pieces[0] + "!" + fdlist.Key,
                                 ParentPath =
                                     (DirectoryPaths.ContainsKey(fdlist.Key) ? DirectoryPaths[fdlist.Key] : RootName)
                                     .Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;"),
@@ -155,7 +155,7 @@ namespace WnsHandler.MEGA
 
         public string GetVersion()
         {
-            return "v.0.4";
+            return "v.0.4.1";
         }
 
         public bool HasFailed()
