@@ -11,6 +11,7 @@ using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using System.IO;
 using System.Threading;
+using System.Net;
 
 namespace WnsHandler.GDrive
 {
@@ -22,6 +23,7 @@ namespace WnsHandler.GDrive
         private bool InitState = false;
         private bool HandlerHasFailed = false;
         private string FootnoteReport = "unused";
+        private string Mirror = "";
 
         static string[] Scopes = { DriveService.Scope.DriveReadonly };
         static string ApplicationName = "WNS App";
@@ -106,7 +108,7 @@ namespace WnsHandler.GDrive
                     {
                         DirectoryNames[file.Id] =
                             (DirectoryNames[parent] == "" ? file.Name :
-                            DirectoryNames[parent] + " / " + file.Name);
+                            DirectoryNames[parent] + " \b " + file.Name);
                         subfolders.Add(file.Id);
                     }
                     // is file
@@ -144,9 +146,14 @@ namespace WnsHandler.GDrive
                         {
                             NumberOfUpdates = cnt,
                             UpdateFinished = fileModifyDates[i],
-                            ParentUrl = "https://drive.google.com/drive/folders/" + parentDatesListPair.Key,
+                            ParentUrl = (
+                                Mirror == ""
+                                ? "https://drive.google.com/drive/folders/" + parentDatesListPair.Key
+                                : Mirror + "/" + WebUtility.UrlEncode(DirectoryNames[parentDatesListPair.Key].Replace(" \b ", "/")).Replace("+", "%20")
+                            ),
                             ParentPath = DirectoryNames[parentDatesListPair.Key]
-                                .Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;"),
+                                .Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;")
+                                .Replace(" \b ", " / "),
                             RootRec = Root,
                             FileDateTimes = fileModifyDates.GetRange(firstIndex, cnt)
                         };
@@ -181,15 +188,43 @@ namespace WnsHandler.GDrive
             Report = new List<ReportRecord>();
             try
             {
-                var pieces = parent.Split(new[] { ' ' }, 2);
+                var pieces = parent.Split(new[] { ' ' }, 3);
+                Mirror = "";
+                if (pieces.Length > 2)
+                {
+                    var prms = parent.Split(new[] { ' ' });
+                    foreach (var param in prms)
+                    {
+                        if (param.Contains("-mirror="))
+                        {
+                            Mirror = param.Replace("-mirror=", "");
+                            Console.WriteLine("GDrive :: Mirror = " + Mirror);
+                        }
+                    }
+                }
+                if (pieces[0].Contains("$"))
+                {
+                    string hashFileName = Path.Combine(ExecutableDirectory, pieces[0].Replace("$", ""));
+                    var hashFile = System.IO.File.ReadAllLines(hashFileName);
+                    pieces[0] = hashFile[0];
+                    Console.WriteLine("GDrive :: real hash = " + pieces[0]);
+                }
                 Console.WriteLine("GDrive :: Processing " + pieces[0]);
                 DirectoryNames[pieces[0]] = "";//pieces[1]; // root name
-                Root = new RootRecord
-                {
-                    Rec =
-                        "<a class=\"rootl\" href=\"https://drive.google.com/drive/folders/"
-                        + pieces[0] + "\">" + pieces[1] + "</a> / "
-                };
+                if (Mirror == "")
+                    Root = new RootRecord
+                    {
+                        Rec =
+                            "<a class=\"rootl\" href=\"https://drive.google.com/drive/folders/"
+                            + pieces[0] + "\">" + pieces[1] + "</a> / "
+                    };
+                else
+                    Root = new RootRecord
+                    {
+                        Rec =
+                            "<a class=\"rootl\" href=\"" + Mirror + "/"
+                            + "\">" + pieces[1] + "</a> / "
+                    };
                 DigFolders("'" + pieces[0] + "' in parents");
                 
                 Console.WriteLine("GDrive :: Valid records: " + Report.Count);
@@ -279,7 +314,7 @@ namespace WnsHandler.GDrive
 
         public string GetVersion()
         {
-            return "v.1.4";
+            return "v.1.5";
         }
 
         public bool HasFailed()
