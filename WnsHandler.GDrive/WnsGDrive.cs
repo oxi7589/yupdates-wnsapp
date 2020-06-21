@@ -149,7 +149,7 @@ namespace WnsHandler.GDrive
                             ParentUrl = (
                                 Mirror == ""
                                 ? "https://drive.google.com/drive/folders/" + parentDatesListPair.Key
-                                : Mirror + "/" + WebUtility.UrlEncode(DirectoryNames[parentDatesListPair.Key]).Replace("+", "%20").Replace("%20%08%20", "/") + "/"
+                                : Mirror + "/" + WebUtility.UrlEncode(DirectoryNames[parentDatesListPair.Key]).Replace("+", "%20").Replace("%2F", "%EF%BC%8F").Replace("%20%08%20", "/") + "/"
                             ),
                             ParentPath = DirectoryNames[parentDatesListPair.Key]
                                 .Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;")
