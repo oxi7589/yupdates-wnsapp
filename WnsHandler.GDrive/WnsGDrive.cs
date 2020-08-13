@@ -46,7 +46,7 @@ namespace WnsHandler.GDrive
                 var request = GdService.Files.List();
                 request.Q = folders;
                 request.Spaces = "drive";
-                request.Fields = "nextPageToken, files(id, name, parents, mimeType, modifiedTime)";
+                request.Fields = "nextPageToken, files(id, name, parents, mimeType, modifiedTime, createdTime)";
                 request.PageToken = pageToken;
                 request.PageSize = 500;
 
@@ -114,9 +114,12 @@ namespace WnsHandler.GDrive
                     // is file
                     else
                     {
-                        if (file.ModifiedTime.HasValue)
+                        var modTime = file.ModifiedTime.HasValue ? file.ModifiedTime.Value.ToUniversalTime() : new DateTime(2000, 1, 1);
+                        var creatTime = file.CreatedTime.HasValue ? file.CreatedTime.Value.ToUniversalTime() : new DateTime(2000, 1, 1);
+                        if (creatTime > modTime) modTime = creatTime;
+                        //if (file.ModifiedTime.HasValue)
                         {
-                            if (file.ModifiedTime.Value.ToUniversalTime() < WayTooLongAgo)
+                            if (modTime < WayTooLongAgo)
                             {
                                 continue; // too old.
                             }
@@ -124,7 +127,7 @@ namespace WnsHandler.GDrive
                             {
                                 fileModDatesByFolder[parent] = new List<DateTime>();
                             }
-                            fileModDatesByFolder[parent].Add(file.ModifiedTime.Value.ToUniversalTime());
+                            fileModDatesByFolder[parent].Add(modTime);
                         }
                     }
                 }
@@ -314,7 +317,7 @@ namespace WnsHandler.GDrive
 
         public string GetVersion()
         {
-            return "v.1.5";
+            return "v.1.6";
         }
 
         public bool HasFailed()
