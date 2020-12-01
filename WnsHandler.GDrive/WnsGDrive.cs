@@ -46,6 +46,8 @@ namespace WnsHandler.GDrive
                 var request = GdService.Files.List();
                 request.Q = folders;
                 request.Spaces = "drive";
+                request.IncludeItemsFromAllDrives = true;
+                request.SupportsAllDrives = true;
                 request.Fields = "nextPageToken, files(id, name, parents, mimeType, modifiedTime, createdTime)";
                 request.PageToken = pageToken;
                 request.PageSize = 500;
@@ -317,7 +319,7 @@ namespace WnsHandler.GDrive
 
         public string GetVersion()
         {
-            return "v.1.6";
+            return "v.1.7";
         }
 
         public bool HasFailed()
