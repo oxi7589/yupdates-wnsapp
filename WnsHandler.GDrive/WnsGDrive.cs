@@ -15,7 +15,7 @@ using System.Net;
 
 namespace WnsHandler.GDrive
 {
-    public class WnsGDrive : IWnsHandler
+    public class WnsGDrive : IWnsHandler, IParallelWnsHandler
     {
         private string WorkingDirectory = "";
         private string ExecutableDirectory = "";
@@ -325,6 +325,11 @@ namespace WnsHandler.GDrive
         public bool HasFailed()
         {
             return HandlerHasFailed;
+        }
+
+        public int GetParallelInstancesCount()
+        {
+            return 4;
         }
     }
 }
