@@ -329,7 +329,7 @@ namespace WnsHandler.GDrive
 
         public int GetParallelInstancesCount()
         {
-            return 4;
+            return 3;
         }
     }
 }

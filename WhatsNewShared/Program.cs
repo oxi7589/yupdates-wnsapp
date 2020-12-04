@@ -63,7 +63,7 @@ namespace WhatsNewShared
                     if (plugin is IParallelWnsHandler)
                     {
                         int instCount = ((IParallelWnsHandler)plugin).GetParallelInstancesCount();
-                        for (int i = 2; i < instCount; ++i)
+                        for (int i = 2; i <= instCount; ++i)
                         {
                             T pluginDupe = (T)Activator.CreateInstance(type);
                             handlers.Add(pluginDupe);
@@ -119,7 +119,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.6.0.0";
+            return "v.1.6.0.1";
         }
 
         void DigDrive()
