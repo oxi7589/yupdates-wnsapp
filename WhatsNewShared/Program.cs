@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -59,6 +60,15 @@ namespace WhatsNewShared
                 {
                     T plugin = (T)Activator.CreateInstance(type);
                     handlers.Add(plugin);
+                    if (plugin is IParallelWnsHandler)
+                    {
+                        int instCount = ((IParallelWnsHandler)plugin).GetParallelInstancesCount();
+                        for (int i = 2; i < instCount; ++i)
+                        {
+                            T pluginDupe = (T)Activator.CreateInstance(type);
+                            handlers.Add(pluginDupe);
+                        }
+                    }
                 }
 
                 return handlers;
@@ -77,7 +87,7 @@ namespace WhatsNewShared
     internal class UpdateChecker
     {
         //List<IWnsHandler> SpecialHandlers = null;
-        Dictionary<string, IWnsHandler> SpecialHandlers = new Dictionary<string, IWnsHandler>();
+        Dictionary<string, List<IWnsHandler>> SpecialHandlers = new Dictionary<string, List<IWnsHandler>>();
 
         static string ExeDirectory = "";
         static string UsrDirectory = "";
@@ -109,7 +119,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.5.2.2";
+            return "v.1.6.0.0";
         }
 
         void DigDrive()
@@ -119,90 +129,97 @@ namespace WhatsNewShared
 
             Report.Clear();
 
-            string argsSplitter = "<<";
+            Dictionary<string, ConcurrentQueue<string>> rootsPerType = new Dictionary<string, ConcurrentQueue<string>>();
 
             foreach (string root in RootDirs)
             {
                 var pieces = root.Split(new[] { ' ' }, 2);
-                if (pieces[0].Length <= 12)
+                var key = pieces[0];
+                if (key.Length <= 12 && key != "#")
                 {
-                    var key = pieces[0];
-                    if (!SpecialHandlers.ContainsKey(key))
+                    if (!rootsPerType.ContainsKey(key))
                     {
-                        Console.WriteLine("Warning: no handler for type " + key);
-                        continue;
-                    }
-                    var handler = SpecialHandlers[key];
-                    try
-                    {
-                        if (!handler.Initialized())
+                        rootsPerType[key] = new ConcurrentQueue<string>();
+
+                        if (!SpecialHandlers.ContainsKey(key))
                         {
-                            handler.Initialize(UsrDirectory, GetExecutingDirectoryName(), wayTooLongAgo.AddDays(-1));
-                            if (!handler.Initialized())
-                            {
-                                SpecialHandlers.Remove(key);
-                                SpecialHandlers.Add(key + "!errNotInit", handler);
-                                SomethingHasFailed = true;
-                                continue;
-                            }
+                            Console.WriteLine("Warning: no handler for type " + key);
+                            continue;
                         }
 
-                        // extra arguments for the WNS engine itself
-                        var wayTooLongAgoLocal = wayTooLongAgo;
-                        var crawlerArgs = pieces[1].TrimEnd();
-                        if (crawlerArgs.Contains(argsSplitter))
+                        var handlers = SpecialHandlers[key];
+                        foreach (var handler in handlers)
                         {
-                            var args = crawlerArgs.Split(new string[] { argsSplitter }, StringSplitOptions.RemoveEmptyEntries);
-                            crawlerArgs = args[0].TrimEnd();
-                            var wnsArgs = args[1].Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);
-                            for (int i = 0; i < wnsArgs.Count(); i++)
+                            try
                             {
-                                switch (wnsArgs[i])
-                                {                                    
-                                    case "NotBefore":
-                                        if (i + 1 < wnsArgs.Count())
-                                        {
-                                            var ticks = long.Parse(wnsArgs[i + 1]);
-                                            var notBefore = new DateTime(ticks);
-                                            wayTooLongAgoLocal = wayTooLongAgoLocal > notBefore ?
-                                                wayTooLongAgo : notBefore;
-                                            Console.WriteLine("Overriding timeframe start point with " + notBefore.ToString()
-                                                + ", new value: " + wayTooLongAgoLocal.ToString());
-                                        }
-                                        else
-                                        {
-                                            throw new Exception("Parameter NotBefore requires one argument: (long)Ticks");
-                                        }
-                                        break;
-                                    default:
-                                        break;
+                                if (!handler.Initialized())
+                                {
+                                    handler.Initialize(UsrDirectory, GetExecutingDirectoryName(), wayTooLongAgo.AddDays(-1));
+                                    if (!handler.Initialized())
+                                    {
+                                        SpecialHandlers[key].Clear();
+                                        //SpecialHandlers.Add(key + "!errNotInit", handler);
+                                        SomethingHasFailed = true;
+                                        continue;
+                                    }
                                 }
                             }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine("Handler [" + key + "] failed with exception: " + e.Message);
+                                SomethingHasFailed = true;
+                            }
                         }
-
-                        var crawlResults = handler.Crawl(crawlerArgs);
-                        if (crawlResults != null)
-                            foreach (var cr in crawlResults)
-                                if (cr.UpdateFinished > wayTooLongAgoLocal)
-                                    Report.Add(cr);
                     }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("Handler [" + key + "] failed with exception: " + e.Message);
-                        SomethingHasFailed = true;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Warning: default handler no longer supported");
-                    //DigFolder(pieces[0], pieces[1]);
-                }
-                foreach (var handlerPair in SpecialHandlers)
-                {
-                    SomethingHasFailed |= handlerPair.Value.HasFailed();
+                    rootsPerType[key].Enqueue(pieces[1]);
                 }
             }
 
+            List<HandlerThread> hthrl = new List<HandlerThread>();
+            foreach (var kvp in rootsPerType)
+            {
+                int hthrid = 0;
+                var handlerType = kvp.Key;
+                foreach (var handler in SpecialHandlers[handlerType])
+                {
+                    HandlerThread hthr = new HandlerThread();
+                    hthr.name = handlerType + hthrid.ToString();
+                    hthr.queue = kvp.Value;
+                    hthr.wnsHandler = handler;
+                    hthr.handlerType = handlerType;
+                    hthr.wayTooLongAgo = wayTooLongAgo;
+                    hthrl.Add(hthr);
+                    Console.WriteLine("Worker spawned: " + handlerType + hthrid.ToString());
+                    ++hthrid;
+                }
+            }
+
+            var processors = new List<Thread>();
+            foreach (var hthr in hthrl)
+            {
+                Thread workerThread = new Thread(hthr.Execute);
+                workerThread.Start();
+                processors.Add(workerThread);
+            }
+
+            foreach (var p in processors)
+            {
+                p.Join();
+            }
+
+            foreach (var hthr in hthrl)
+            {
+                Report.AddRange(hthr.Report);
+            }
+
+            foreach (var handlerPair in SpecialHandlers)
+            {
+                foreach (var handler in handlerPair.Value)
+                {
+                    SomethingHasFailed |= handler.HasFailed();
+                }
+            }
+            
             Report.Sort((x, y) => y.UpdateFinished.CompareTo(x.UpdateFinished));
         }
 
@@ -568,7 +585,7 @@ namespace WhatsNewShared
                 // HTMLhouse limit is 64 KiB, ~10 KiB goes to the footer and header
                 // it's safe to use no more than 50 kB for the body of the report
                 if (groupLen8 + repLen8 > 50000 && overflow == 0) { overflow = 1; }
-                if (groupLen8 + repLen8 > 120000) { if (!NoSizeLimit) { overflow2 = true; break; } }
+                if (groupLen8 + repLen8 > 500000) { if (!NoSizeLimit) { overflow2 = true; break; } }
             }
 
             if (!SomethingHasFailed)
@@ -606,8 +623,9 @@ namespace WhatsNewShared
             string SystemStatus = String.Format("ok [" + GetVersion() + " on {0}]", Environment.OSVersion.ToString());
             foreach (var shPair in SpecialHandlers)
             {
-                SystemStatus += ("<br>Plugin[" + shPair.Key + ", "+ shPair.Value.GetVersion() +"]: " 
-                    + shPair.Value.ReportStatus());
+                foreach (var handler in shPair.Value)
+                    SystemStatus += ("<br>Plugin[" + shPair.Key + ", "+ handler.GetVersion() +"]: " 
+                        + handler.ReportStatus());
             }
 
             string cdt = DateTime.Now.ToUniversalTime().ToString("s") + "Z";
@@ -710,7 +728,12 @@ namespace WhatsNewShared
                 var handlers = GenericPluginLoader<IWnsHandler>.LoadHandlers(GetExecutingDirectoryName());
                 foreach (var handler in handlers)
                 {
-                    SpecialHandlers.Add(handler.GetShortName(), handler);
+                    var shortName = handler.GetShortName();
+                    if (!SpecialHandlers.ContainsKey(shortName))
+                    {
+                        SpecialHandlers[shortName] = new List<IWnsHandler>();
+                    }
+                    SpecialHandlers[shortName].Add(handler);
                     Console.WriteLine("Handler loaded:" + handler.GetShortName());
                 }
             }

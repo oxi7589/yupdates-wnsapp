@@ -16,4 +16,9 @@ namespace WhatsNewShared
         string GetVersion();
         bool HasFailed();
     }
+
+    public interface IParallelWnsHandler
+    {
+        int GetParallelInstancesCount();
+    }
 }
