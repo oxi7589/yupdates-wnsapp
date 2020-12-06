@@ -6,7 +6,8 @@ namespace WhatsNewShared
 {
     public class RootRecord
     {
-        public string Rec = "";
+        public string Rec = ""; // html representation of the record's root; must be neigther null nor empty
+        public string UniqId = ""; // arbitrary string uniquely identifying the root; must be non-null
     }
 
     [Flags]

@@ -97,7 +97,8 @@ namespace WnsHandler.YaDisk
                 {
                     Rec =
                         "<a class=\"rootl\" href=\"https://yadi.sk/d/" + RootHash
-                        + "\">" + RootName + "</a> / "
+                        + "\">" + RootName + "</a> /",
+                    UniqId = RootHash
                 };
 
                 pathsQueue.Enqueue("/");
@@ -233,7 +234,7 @@ namespace WnsHandler.YaDisk
 
         public string GetVersion()
         {
-            return "v.0.1a";
+            return "v.0.2a";
         }
 
         public bool HasFailed()
