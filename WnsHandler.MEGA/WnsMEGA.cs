@@ -48,11 +48,17 @@ namespace WnsHandler.MEGA
                 Uri folderLink = new Uri("https://mega.nz/#" + pieces[0]);
                 Console.WriteLine("[MEGA] Processing " + pieces[0]);
                 RootName = "";//pieces[1];
+                // pieces[0]        F!folder!key
+                // new style        https://mega.nz/folder/folder#key
+                var newStyleRootLink = pieces[0].Replace("F!", "https://mega.nz/folder/").Replace("!", "#");
                 Root = new RootRecord
                 {
                     Rec =
-                        "<a class=\"rootl\" href=\"/mg/?" + pieces[0]
+                        "<a class=\"rootl\" href=\""
+                        + newStyleRootLink
                         + "\">" + pieces[1] + "</a> / "
+                        ,
+                    UniqId = pieces[0]
                 };
                 IEnumerable<INode> nodes = ApiClient.GetNodesFromLink(folderLink);
                 Dictionary<string, List<DateTime>> fileDates = new Dictionary<string, List<DateTime>>();
@@ -90,7 +96,7 @@ namespace WnsHandler.MEGA
                             {
                                 NumberOfUpdates = cnt,
                                 UpdateFinished = fileModifyDates[i],
-                                ParentUrl = "/mg/?" + pieces[0] + "!" + fdlist.Key,
+                                ParentUrl = newStyleRootLink + "/folder/" + fdlist.Key,
                                 ParentPath =
                                     (DirectoryPaths.ContainsKey(fdlist.Key) ? DirectoryPaths[fdlist.Key] : RootName)
                                     .Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;"),
@@ -155,7 +161,7 @@ namespace WnsHandler.MEGA
 
         public string GetVersion()
         {
-            return "v.0.4.1";
+            return "v.0.5";
         }
 
         public bool HasFailed()

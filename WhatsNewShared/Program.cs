@@ -117,7 +117,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.6.0.1";
+            return "v.1.7.0.0";
         }
 
         void DigDrive()
@@ -388,12 +388,14 @@ namespace WhatsNewShared
                     {
                         continue; // don't care for new recs already proven to be old news
                     }
-                    if (newRecord.RootRec.Rec == oldRecord.RootRec.Rec
-                        && newRecord.ParentUrl == oldRecord.ParentUrl
-                        && newRecord.ParentPath == oldRecord.ParentPath) // good candidate for further checks (same folder path)
+                    if (newRecord.RootRec.UniqId == oldRecord.RootRec.UniqId // root uids must match
+                        && newRecord.ParentUrl == oldRecord.ParentUrl // urls must match, though may both be ""
+                        && (newRecord.ParentPath == oldRecord.ParentPath || newRecord.ParentUrl != "")
+                        ) // good candidate for further checks (same folder path)
                     {
                         var datesIntersection = oldRecordDateTimes.IntersectAll(newRecord.FileDateTimes);
                         var newRecDateTimes = newRecord.FileDateTimes.ExceptAll(datesIntersection).ToList();
+                        newRecDateTimes.Sort();
                         oldRecordDateTimes = oldRecordDateTimes.ExceptAll(datesIntersection).ToList();
                         if (newRecDateTimes.Count() > 0) // new record has more stuff than the old one
                         {
@@ -407,6 +409,9 @@ namespace WhatsNewShared
 //                            Console.WriteLine("dbg :: new rec is deemed to be old news");
                             newRecord.Flags |= ReportFlags.NotNew;
                         }
+                        // actualize names
+                        oldRecord.RootRec.Rec = newRecord.RootRec.Rec;
+                        oldRecord.ParentPath = newRecord.ParentPath;
                     }
                 }
                 oldRecord.Flags |= ReportFlags.NotNew;
@@ -423,9 +428,11 @@ namespace WhatsNewShared
                 else
                 {
                     oldRecord.FileDateTimes = oldRecord.FileDateTimes.ExceptAll(oldRecordDateTimes).ToList();
+                    oldRecord.FileDateTimes.Sort();
                     oldRecord.UpdateFinished = oldRecord.FileDateTimes.Last();
                     oldRecord.NumberOfUpdates = oldRecord.FileDateTimes.Count();
-                    oldReportActualRecords.Add(oldRecord);
+                    if (oldRecord.UpdateFinished > wayTooLongAgo)
+                        oldReportActualRecords.Add(oldRecord);
  //                   Console.WriteLine("dbg :: old rec remains partially");
                 }
             }

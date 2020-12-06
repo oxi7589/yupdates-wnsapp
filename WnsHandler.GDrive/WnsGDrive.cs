@@ -198,13 +198,21 @@ namespace WnsHandler.GDrive
                 if (pieces.Length > 2)
                 {
                     var prms = parent.Split(new[] { ' ' });
+                    bool seenRealParam = false;
+                    int paramIdx = 0;
                     foreach (var param in prms)
                     {
                         if (param.Contains("-mirror="))
                         {
                             Mirror = param.Replace("-mirror=", "");
                             Console.WriteLine("GDrive :: Mirror = " + Mirror);
+                            seenRealParam = true;
                         }
+                        if (!seenRealParam && paramIdx > 1)
+                        {
+                            pieces[1] += " " + param;
+                        }
+                        ++paramIdx;
                     }
                 }
                 if (pieces[0].Contains("$"))
@@ -221,14 +229,16 @@ namespace WnsHandler.GDrive
                     {
                         Rec =
                             "<a class=\"rootl\" href=\"https://drive.google.com/drive/folders/"
-                            + pieces[0] + "\">" + pieces[1] + "</a> / "
+                            + pieces[0] + "\">" + pieces[1] + "</a> /",
+                        UniqId = pieces[0]
                     };
                 else
                     Root = new RootRecord
                     {
                         Rec =
                             "<a class=\"rootl\" href=\"" + Mirror + "/"
-                            + "\">" + pieces[1] + "</a> / "
+                            + "\">" + pieces[1] + "</a> /",
+                        UniqId = pieces[0]
                     };
                 DigFolders("'" + pieces[0] + "' in parents");
                 
@@ -319,7 +329,7 @@ namespace WnsHandler.GDrive
 
         public string GetVersion()
         {
-            return "v.1.7";
+            return "v.1.8";
         }
 
         public bool HasFailed()
