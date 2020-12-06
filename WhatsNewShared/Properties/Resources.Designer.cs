@@ -79,60 +79,6 @@ namespace WhatsNewShared.Properties {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на  ({0} files).
-        /// </summary>
-        internal static string ReportLineStrresCount {
-            get {
-                return ResourceManager.GetString("ReportLineStrresCount", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на &lt;/div&gt;.
-        /// </summary>
-        internal static string ReportLineStrresEnd {
-            get {
-                return ResourceManager.GetString("ReportLineStrresEnd", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на &lt;a href=&quot;{0}&quot;&gt;{1}&lt;/a&gt;.
-        /// </summary>
-        internal static string ReportLineStrresPath {
-            get {
-                return ResourceManager.GetString("ReportLineStrresPath", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на {0}.
-        /// </summary>
-        internal static string ReportLineStrresPathNoUrl {
-            get {
-                return ResourceManager.GetString("ReportLineStrresPathNoUrl", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLine&quot; aria-haspopup=&quot;true&quot;&gt;&lt;div class=&quot;repDate&quot;&gt;{0}&lt;/div&gt; | {1}.
-        /// </summary>
-        internal static string ReportLineStrresStart {
-            get {
-                return ResourceManager.GetString("ReportLineStrresStart", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLineSA&quot;&gt;&lt;div class=&quot;repDate&quot;&gt;{0}&lt;/div&gt; | {1}.
-        /// </summary>
-        internal static string ReportLineStrresStartShowAll {
-            get {
-                return ResourceManager.GetString("ReportLineStrresStartShowAll", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Ищет локализованную строку, похожую на &lt;div class=&quot;repLine&quot;&gt;. . .&lt;/div&gt;.
         /// </summary>
         internal static string ReportOverflow {
