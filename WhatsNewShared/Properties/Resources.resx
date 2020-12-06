@@ -123,24 +123,6 @@
   <data name="ReportGroupStart" xml:space="preserve">
     <value>&lt;details&gt;&lt;summary&gt;Ten or more folders updated in {0} (click here to show/hide)&lt;/summary&gt;&lt;div class="repThick"&gt;</value>
   </data>
-  <data name="ReportLineStrresCount" xml:space="preserve">
-    <value> ({0} files)</value>
-  </data>
-  <data name="ReportLineStrresEnd" xml:space="preserve">
-    <value>&lt;/div&gt;</value>
-  </data>
-  <data name="ReportLineStrresPath" xml:space="preserve">
-    <value>&lt;a href="{0}"&gt;{1}&lt;/a&gt;</value>
-  </data>
-  <data name="ReportLineStrresPathNoUrl" xml:space="preserve">
-    <value>{0}</value>
-  </data>
-  <data name="ReportLineStrresStart" xml:space="preserve">
-    <value>&lt;div class="repLine" aria-haspopup="true"&gt;&lt;div class="repDate"&gt;{0}&lt;/div&gt; | {1}</value>
-  </data>
-  <data name="ReportLineStrresStartShowAll" xml:space="preserve">
-    <value>&lt;div class="repLineSA"&gt;&lt;div class="repDate"&gt;{0}&lt;/div&gt; | {1}</value>
-  </data>
   <data name="ReportOverflow" xml:space="preserve">
     <value>&lt;div class="repLine"&gt;. . .&lt;/div&gt;</value>
   </data>

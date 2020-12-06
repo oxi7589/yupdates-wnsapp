@@ -92,8 +92,6 @@ namespace WhatsNewShared
         static string ExeDirectory = "";
         static string UsrDirectory = "";
         List<string> RootDirs = null;
-        string AuthorizationHeader = "";
-        string PubPageId = "";
         DateTime wayTooLongAgo;
 
         List<ReportRecord> Report = new List<ReportRecord>();
@@ -210,6 +208,7 @@ namespace WhatsNewShared
             foreach (var hthr in hthrl)
             {
                 Report.AddRange(hthr.Report);
+                SomethingHasFailed |= hthr.SomethingHasFailed;
             }
 
             foreach (var handlerPair in SpecialHandlers)
@@ -222,35 +221,7 @@ namespace WhatsNewShared
             
             Report.Sort((x, y) => y.UpdateFinished.CompareTo(x.UpdateFinished));
         }
-
-        void PublishReport(string report)
-        {
-            var httph = new HttpClientHandler();
-            httph.UseCookies = false; // disable internal cookies handling to help with import
-            var http = new HttpClient(httph);
-            http.DefaultRequestHeaders.Clear();
-
-            http.DefaultRequestHeaders.Add("Authorization", AuthorizationHeader);
-
-            var pairs = new List<KeyValuePair<string, string>>
-            {
-                new KeyValuePair<string, string>("html", report),
-                new KeyValuePair<string, string>("public", "")
-            };
-
-            var content = new FormUrlEncodedContent(pairs);
-
-            var res = http.PostAsync("https://html.house/⌂/" + PubPageId, content).Result;
-            if (res.IsSuccessStatusCode)
-            {
-                Console.WriteLine("Uploaded successfully!");
-            }
-            else
-            {
-                Console.WriteLine("Upload failed!");
-            }
-        }
-
+        
         void UpdateFeed(List<string> atomRecordsList)
         {
             var atomRecordsListPrev = new List<string>();
@@ -376,7 +347,6 @@ namespace WhatsNewShared
         void MakeReport()
         {
             // load previous report
-//            File.WriteAllText( Path.Combine(UsrDirectory, "prevrepx.json"), Newtonsoft.Json.JsonConvert.SerializeObject(Report));
             string oldReportPath = Path.Combine(UsrDirectory, "prevrep.json");
             List<ReportRecord> oldReport = null;
             if (File.Exists(oldReportPath))
@@ -484,18 +454,15 @@ namespace WhatsNewShared
                     Console.WriteLine(e.Message);
                 }
             }
+
             // make report page
 
-            string rep = PageHeader;
-
-            const string eoSmallRepMark = "<!--EndOfSmallReport-->";
+            const string stFullRepMark = "<!--StOfReport-->";
             const string eoFullRepMark = "<!--EndOfReport-->";
-            const string stLongGroupMark = "<!--StOfGroupCutoff-->";
-            const string eoLongGroupMark = "<!--EndOfGroupCutoff-->";
 
-            // 0 : ok; -1: endof small report is marked already; 1: overflow detected, but not yet marked; 
-            // 2: overflow detected, and a part of the group needs to be erased in the small report
-            int overflow = 0;
+            string rep = PageHeader + stFullRepMark;
+
+            // report body exceeds 500kb
             bool overflow2 = false;
 
             string group = "";
@@ -517,20 +484,11 @@ namespace WhatsNewShared
                             Properties.Resources.ResourceManager.GetString("ReportGroupStart"), 
                             prevRoot)
                             + group
-                            + (overflow == 2 ? eoLongGroupMark : "")
                             + Properties.Resources.ResourceManager.GetString("ReportGroupEnd");
                     }
                     else rep += group;
-                    // also mark the end of htmlhouse report
-                    if (overflow > 0) { rep += eoSmallRepMark; overflow = -1; }
-                    // and reset group-related stuff
+                    // reset group-related stuff
                     group = ""; gCount = 0;
-                }
-
-                if (overflow == 1) // ran out of space in the middle of the group
-                {
-                    overflow = 2;
-                    group += stLongGroupMark;
                 }
 
                 gCount++; prevDate = r.UpdateFinished; prevRoot = r.RootRec.Rec;
@@ -568,23 +526,25 @@ namespace WhatsNewShared
                 string date = r.UpdateFinished.ToString("s") + "Z";
                 string dateHumanReadable = r.UpdateFinished.ToString();
                 string dateStub = Properties.Resources.ResourceManager.GetString("wns14_DateStub");
-                // :: wrap for HTML report
                 // wrap in repLine div
                 string wrappedLine = String.Format(
                     Properties.Resources.ResourceManager.GetString("wns14_ReportLine"),
                     currentline // line root+body
                 );
+                // :: date for HTML report
                 group += wrappedLine.Replace(dateStub, date);
-                // :: wrap for Atom/RSS
+                // :: date for Atom/RSS
                 if ((r.Flags & ReportFlags.NotNew) != ReportFlags.NotNew)
+                {
                     atomRecordsList.Add(wrappedLine.Replace(dateStub, dateHumanReadable));
+                }
 
                 // too much stuff, ignore anything following
                 int groupLen8 = Encoding.UTF8.GetByteCount(group);
                 int repLen8 = Encoding.UTF8.GetByteCount(rep);
-                // HTMLhouse limit is 64 KiB, ~10 KiB goes to the footer and header
-                // it's safe to use no more than 50 kB for the body of the report
-                if (groupLen8 + repLen8 > 50000 && overflow == 0) { overflow = 1; }
+
+                // limit the body of the report to 500kb unless -nolimit flag is used
+                // this limits the damage caused by WNS bugs
                 if (groupLen8 + repLen8 > 500000) { if (!NoSizeLimit) { overflow2 = true; break; } }
             }
 
@@ -604,7 +564,6 @@ namespace WhatsNewShared
                     Properties.Resources.ResourceManager.GetString("ReportGroupStart"),
                     prevRoot)
                     + group
-                    + (overflow == 2 ? eoLongGroupMark : "")
                     + Properties.Resources.ResourceManager.GetString("ReportGroupEnd");
             }
             else
@@ -618,9 +577,11 @@ namespace WhatsNewShared
             
             string DrivesList = "";
             foreach (string drive in RootDirs)
-                DrivesList += drive + "\n";
-
-            string SystemStatus = String.Format("ok [" + GetVersion() + " on {0}]", Environment.OSVersion.ToString());
+                DrivesList += drive.Replace("&","&amp;").Replace("<","&lt;").Replace(">","&gt;") + "\n";
+            
+            string SystemStatus = String.Format("Updates checker {0} on {1}",
+                GetVersion(),
+                Environment.OSVersion.ToString());
             foreach (var shPair in SpecialHandlers)
             {
                 foreach (var handler in shPair.Value)
@@ -641,46 +602,6 @@ namespace WhatsNewShared
             if (System.IO.File.Exists(pagepath))
                 System.IO.File.Copy(pagepath, pagepathbak);
             System.IO.File.WriteAllText(pagepath, rep, Encoding.UTF8);
-
-            // cut down report for htmlhouse
-            if (overflow != 0)
-            {
-                if (rep.Contains(eoLongGroupMark) && rep.Contains(stLongGroupMark))
-                {
-                    var m1 = rep.IndexOf(stLongGroupMark, 0, StringComparison.Ordinal);
-                    var m2 = rep.IndexOf(eoLongGroupMark, 0, StringComparison.Ordinal);
-                    rep = rep.Remove(m1, m2 - m1 + eoLongGroupMark.Length);
-                    rep = rep.Insert(m1, Properties.Resources.ResourceManager.GetString("ReportOverflow")); // "..." mark within group
-                    var m3 = rep.IndexOf(eoFullRepMark, 0, StringComparison.Ordinal);
-                    rep = rep.Insert(m3, eoSmallRepMark);
-                }
-                if (rep.Contains(eoSmallRepMark))
-                {
-                    var m1 = rep.IndexOf(eoSmallRepMark, 0, StringComparison.Ordinal);
-                    var m2 = rep.IndexOf(eoFullRepMark, 0, StringComparison.Ordinal);
-                    rep = rep.Remove(m1, m2 - m1 + eoFullRepMark.Length);
-                    if (!overflow2)
-                    {
-                        rep = rep.Insert(m1, Properties.Resources.ResourceManager.GetString("ReportOverflow"));
-                    }
-                }
-            }
-
-            // save cut-down report to the fs as well
-            string pagepathhh = Path.Combine(UsrDirectory, "latest.house.htm");
-            if (File.Exists(pagepathhh))
-                File.Delete(pagepathhh);
-            System.IO.File.WriteAllText(pagepathhh, rep, Encoding.UTF8);
-
-            // publish!
-            if (PubPageId != "TEST")
-            {
-                PublishReport(rep);
-            }
-            else
-            {
-                Console.WriteLine("Note: uploading was disabled via the config.");
-            }
         }
 
         public void Run()
@@ -702,12 +623,6 @@ namespace WhatsNewShared
                     if (line != "") RootDirs.Add(line);
                 }
                 Console.WriteLine("Found " + RootDirs.Count.ToString() + " root directories.");
-
-                var AuthHeader = 
-                    System.IO.File.ReadAllLines(Path.Combine(GetExecutingDirectoryName(), "house.txt"));
-                PubPageId = AuthHeader[0];
-                AuthorizationHeader = AuthHeader[1];
-                Console.WriteLine("Page to publish results: " + PubPageId);
 
                 PageHeader =
                     System.IO.File.ReadAllText(Path.Combine(GetExecutingDirectoryName(), "header.txt"));

@@ -79,6 +79,7 @@ namespace WhatsNewShared
             {
                 Process(arg);
             }
+            Console.WriteLine("[[" + name + "]] finished");
         }
     }
 }
