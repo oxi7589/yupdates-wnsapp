@@ -117,7 +117,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.7.0.0";
+            return "v.1.7.0.1";
         }
 
         void DigDrive()
@@ -137,13 +137,13 @@ namespace WhatsNewShared
                 {
                     if (!rootsPerType.ContainsKey(key))
                     {
-                        rootsPerType[key] = new ConcurrentQueue<string>();
-
                         if (!SpecialHandlers.ContainsKey(key))
                         {
                             Console.WriteLine("Warning: no handler for type " + key);
                             continue;
                         }
+
+                        rootsPerType[key] = new ConcurrentQueue<string>();
 
                         var handlers = SpecialHandlers[key];
                         foreach (var handler in handlers)
