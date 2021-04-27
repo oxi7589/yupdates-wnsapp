@@ -34,6 +34,9 @@ namespace WnsHandler.GDrive
 
         private Dictionary<string, string> DirectoryNames = new Dictionary<string, string>();
 
+        string DbgFilename = null;
+        List<string> DbgList = null;
+
         void DigFolders(string folders)
         {
             Console.WriteLine("[GDrive] Q: " + folders);
@@ -116,6 +119,9 @@ namespace WnsHandler.GDrive
                     // is file
                     else
                     {
+                        //DbgList.Add((DirectoryNames[parent] == "" ? file.Name :
+                        //    DirectoryNames[parent] + " \b " + file.Name).Replace("\b", "/"));
+
                         var modTime = file.ModifiedTime.HasValue ? file.ModifiedTime.Value.ToUniversalTime() : new DateTime(2000, 1, 1);
                         var creatTime = file.CreatedTime.HasValue ? file.CreatedTime.Value.ToUniversalTime() : new DateTime(2000, 1, 1);
                         if (creatTime > modTime) modTime = creatTime;
@@ -240,9 +246,17 @@ namespace WnsHandler.GDrive
                             + "\">" + pieces[1] + "</a> /",
                         UniqId = pieces[0]
                     };
+
+                DbgFilename = pieces[1];
+                DbgList = new List<string>();
+
                 DigFolders("'" + pieces[0] + "' in parents");
                 
                 Console.WriteLine("GDrive :: Valid records: " + Report.Count);
+
+                DbgList.Sort();
+                //System.IO.File.WriteAllLines("GDrive-dbg-"+DbgFilename+".log", DbgList);
+                
             }
             catch (Exception e)
             {
