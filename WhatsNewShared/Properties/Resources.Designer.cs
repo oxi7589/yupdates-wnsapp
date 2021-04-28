@@ -140,5 +140,14 @@ namespace WhatsNewShared.Properties {
                 return ResourceManager.GetString("wns14_ReportLine", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на &lt;!--monthDivision--&gt;.
+        /// </summary>
+        internal static string wns17_MonSeparator {
+            get {
+                return ResourceManager.GetString("wns17_MonSeparator", resourceCulture);
+            }
+        }
     }
 }

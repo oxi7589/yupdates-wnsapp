@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
@@ -84,6 +86,15 @@ namespace WhatsNewShared
         public List<string> Entries { get; set; }
     }
 
+    public class ExportedReportData
+    {
+        public string ReportBody { get; set; }
+        public string RootsList { get; set; }
+        public string TechDetails { get; set; }
+        public string Timestamp { get; set; }
+        public bool Success { get; set; }
+    }
+
     internal class UpdateChecker
     {
         //List<IWnsHandler> SpecialHandlers = null;
@@ -98,14 +109,18 @@ namespace WhatsNewShared
         string PageFooter = "";
         string PageHeader = "";
 
+        string YdcSecret = "/y/upd4tez";
+
         bool SomethingHasFailed = false;
 
         public int ReportPeriod { get; set; }
+        public bool Push2YDC { get; set; }
         public bool NoSizeLimit { get; set; }
 
         public UpdateChecker()
         {
             NoSizeLimit = false;
+            Push2YDC = false;
         }
 
         public static string GetExecutingDirectoryName()
@@ -117,7 +132,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.7.0.1";
+            return "v.1.7.1.0";
         }
 
         void DigDrive()
@@ -468,6 +483,7 @@ namespace WhatsNewShared
             const string eoFullRepMark = "<!--EndOfReport-->";
 
             string rep = PageHeader + stFullRepMark;
+            string repMainBody = "";
 
             // report body exceeds 500kb
             bool overflow2 = false;
@@ -484,16 +500,20 @@ namespace WhatsNewShared
             {
                 if (r.RootRec.Rec != prevRoot || prevDate.AddHours(-1) > r.UpdateFinished)
                 {
+                    if (r.UpdateFinished.Month != prevDate.Month)
+                    {
+                        repMainBody += Properties.Resources.ResourceManager.GetString("wns17_MonSeparator");
+                    }
                     // new group. Write old one to the report
                     if (gCount >= 10)
                     {
-                        rep += String.Format(
+                        repMainBody += String.Format(
                             Properties.Resources.ResourceManager.GetString("ReportGroupStart"), 
                             prevRoot)
                             + group
                             + Properties.Resources.ResourceManager.GetString("ReportGroupEnd");
                     }
-                    else rep += group;
+                    else repMainBody += group;
                     // reset group-related stuff
                     group = ""; gCount = 0;
                 }
@@ -548,7 +568,7 @@ namespace WhatsNewShared
 
                 // too much stuff, ignore anything following
                 int groupLen8 = Encoding.UTF8.GetByteCount(group);
-                int repLen8 = Encoding.UTF8.GetByteCount(rep);
+                int repLen8 = Encoding.UTF8.GetByteCount(repMainBody);
 
                 // limit the body of the report to 500kb unless -nolimit flag is used
                 // this limits the damage caused by WNS bugs
@@ -567,7 +587,7 @@ namespace WhatsNewShared
             // add last group
             if (gCount >= 10)
             {
-                rep += String.Format(
+                repMainBody += String.Format(
                     Properties.Resources.ResourceManager.GetString("ReportGroupStart"),
                     prevRoot)
                     + group
@@ -575,11 +595,13 @@ namespace WhatsNewShared
             }
             else
             {
-                rep += group;
+                repMainBody += group;
             }
 
             // . . . in the end if the length of the report is just waaaaay too huge
-            if (overflow2) rep += Properties.Resources.ResourceManager.GetString("ReportOverflow");
+            if (overflow2) repMainBody += Properties.Resources.ResourceManager.GetString("ReportOverflow");
+
+            rep += repMainBody;
             rep += eoFullRepMark;
             
             string DrivesList = "";
@@ -609,6 +631,54 @@ namespace WhatsNewShared
             if (System.IO.File.Exists(pagepath))
                 System.IO.File.Copy(pagepath, pagepathbak);
             System.IO.File.WriteAllText(pagepath, rep, Encoding.UTF8);
+
+            // save JSON report as well
+            string expjsonpath = Path.Combine(UsrDirectory, "latest.json");
+            ExportedReportData erd = new ExportedReportData
+            {
+                ReportBody = repMainBody,
+                RootsList = DrivesList,
+                TechDetails = SystemStatus,
+                Timestamp = cdt,
+                Success = !SomethingHasFailed
+            };
+            var serializedErd = JsonConvert.SerializeObject(erd);
+            System.IO.File.WriteAllText(expjsonpath, serializedErd, Encoding.UTF8);
+
+            if (Push2YDC)
+            {
+                HttpClient http = new HttpClient();
+                http.DefaultRequestHeaders.Add("X-Yupdates-Secret", YdcSecret);
+                //http.DefaultRequestHeaders.Add("Authorization", "Basic YWRmOmFkZg==");
+                http.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 WnsApp.NET");
+                System.Net.ServicePointManager.SecurityProtocol =
+                    System.Net.SecurityProtocolType.Tls12 | System.Net.SecurityProtocolType.Tls11 | System.Net.SecurityProtocolType.Tls;
+                var httpc = new StringContent(serializedErd, Encoding.UTF8, "application/json");
+                var response = http.PostAsync("https://cat.yupdates.art/sys/push-upd-report", httpc)
+                    .GetAwaiter().GetResult();
+                try
+                {
+                    var content = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    var contentObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                    var succ = (bool)contentObj["success"];
+                    if (succ)
+                    {
+                        Console.WriteLine("YDC publication succeeded");
+                    }
+                    else
+                    {
+                        throw new Exception("YDC API has rejected the request");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Error :: YDC publication failed with exception (" + e.Message + ")");
+                }
+            }
+            else
+            {
+                Console.WriteLine("YDC publication has not been enabled.");
+            }
         }
 
         public void Run()
@@ -635,6 +705,9 @@ namespace WhatsNewShared
                     System.IO.File.ReadAllText(Path.Combine(GetExecutingDirectoryName(), "header.txt"));
                 PageFooter =
                     System.IO.File.ReadAllText(Path.Combine(GetExecutingDirectoryName(), "footer.txt"));
+                YdcSecret =
+                    System.IO.File.ReadAllText(Path.Combine(GetExecutingDirectoryName(), "ydc-secret.txt"));
+                YdcSecret = Regex.Replace(YdcSecret, "[^A-Za-z0-9-]", "");
             }
             catch (Exception E)
             {
@@ -720,6 +793,10 @@ namespace WhatsNewShared
                 if (line.Contains("-nolimit"))
                 {
                     core.NoSizeLimit = true;
+                }
+                if (line.Contains("-push2ydc"))
+                {
+                    core.Push2YDC = true;
                 }
             }
 
