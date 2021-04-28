@@ -144,4 +144,7 @@
   <data name="wns14_ReportLine" xml:space="preserve">
     <value>&lt;div class="repLine"&gt;&lt;span class="repDate"&gt;$$WNSDATE$$&lt;/span&gt; | {0}&lt;/div&gt;</value>
   </data>
+  <data name="wns17_MonSeparator" xml:space="preserve">
+    <value>&lt;!--monthDivision--&gt;</value>
+  </data>
 </root>

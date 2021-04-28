@@ -254,7 +254,7 @@ namespace WnsHandler.GDrive
                 
                 Console.WriteLine("GDrive :: Valid records: " + Report.Count);
 
-                DbgList.Sort();
+                //DbgList.Sort();
                 //System.IO.File.WriteAllLines("GDrive-dbg-"+DbgFilename+".log", DbgList);
                 
             }
