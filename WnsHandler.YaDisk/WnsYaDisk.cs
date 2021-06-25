@@ -98,6 +98,7 @@ namespace WnsHandler.YaDisk
                     Rec =
                         "<a class=\"rootl\" href=\"https://yadi.sk/d/" + RootHash
                         + "\">" + RootName + "</a> /",
+                    Label = RootName,
                     UniqId = RootHash
                 };
 
@@ -155,6 +156,7 @@ namespace WnsHandler.YaDisk
                                                 NumberOfUpdates = 0,
                                                 ParentUrl = "https://yadi.sk/d/" + RootHash + currentPath,
                                                 ParentPath = currentPath.Substring(1).Replace("/", " / "),
+                                                ParentPathMir = currentPath.Substring(1).Replace("/", " \b "),
                                                 FileDateTimes = new List<DateTime>()
                                             };
                                         }
@@ -234,12 +236,17 @@ namespace WnsHandler.YaDisk
 
         public string GetVersion()
         {
-            return "v.0.2a";
+            return "v.0.3a";
         }
 
         public bool HasFailed()
         {
             return HandlerHasFailed;
+        }
+
+        public bool CanBeMirrored()
+        {
+            return true;
         }
     }
 }

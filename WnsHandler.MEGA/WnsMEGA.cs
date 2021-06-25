@@ -58,6 +58,7 @@ namespace WnsHandler.MEGA
                         + newStyleRootLink
                         + "\">" + pieces[1] + "</a> / "
                         ,
+                    Label = pieces[1],
                     UniqId = pieces[0]
                 };
                 IEnumerable<INode> nodes = ApiClient.GetNodesFromLink(folderLink);
@@ -100,6 +101,8 @@ namespace WnsHandler.MEGA
                                 ParentPath =
                                     (DirectoryPaths.ContainsKey(fdlist.Key) ? DirectoryPaths[fdlist.Key] : RootName)
                                     .Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;"),
+                                ParentPathMir = 
+                                    (DirectoryPaths.ContainsKey(fdlist.Key) ? DirectoryPaths[fdlist.Key].Replace(" / "," \b ") : ""),
                                 RootRec = Root,
                                 FileDateTimes = fileModifyDates.GetRange(firstIndex, cnt)
                             };
@@ -161,12 +164,17 @@ namespace WnsHandler.MEGA
 
         public string GetVersion()
         {
-            return "v.0.5";
+            return "v.0.6";
         }
 
         public bool HasFailed()
         {
             return HandlerHasFailed;
+        }
+
+        public bool CanBeMirrored()
+        {
+            return true;
         }
     }
 }

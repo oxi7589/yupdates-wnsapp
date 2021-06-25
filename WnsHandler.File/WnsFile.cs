@@ -138,7 +138,7 @@ namespace WnsHandler.File
 
         public string GetVersion()
         {
-            return "v.1.5";
+            return "v.1.6";
         }
 
         public void Initialize(string workDir, string exeDir, DateTime wayTooLongAgo)
@@ -160,6 +160,11 @@ namespace WnsHandler.File
         }
 
         public bool HasFailed()
+        {
+            return false;
+        }
+
+        public bool CanBeMirrored()
         {
             return false;
         }

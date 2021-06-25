@@ -132,7 +132,7 @@ namespace WhatsNewShared
 
         string GetVersion()
         {
-            return "v.1.7.1.0";
+            return "v.1.8.0.0";
         }
 
         void DigDrive()
@@ -201,6 +201,7 @@ namespace WhatsNewShared
                     hthr.wnsHandler = handler;
                     hthr.handlerType = handlerType;
                     hthr.wayTooLongAgo = wayTooLongAgo;
+                    hthr.executableDirectory = GetExecutingDirectoryName();
                     hthrl.Add(hthr);
                     Console.WriteLine("Worker spawned: " + handlerType + hthrid.ToString());
                     ++hthrid;
