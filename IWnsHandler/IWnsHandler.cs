@@ -15,6 +15,7 @@ namespace WhatsNewShared
         string GetShortName();
         string GetVersion();
         bool HasFailed();
+        bool CanBeMirrored();
     }
 
     public interface IParallelWnsHandler

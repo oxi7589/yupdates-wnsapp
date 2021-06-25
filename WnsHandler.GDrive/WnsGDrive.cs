@@ -11,7 +11,6 @@ using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using System.IO;
 using System.Threading;
-using System.Net;
 
 namespace WnsHandler.GDrive
 {
@@ -23,7 +22,6 @@ namespace WnsHandler.GDrive
         private bool InitState = false;
         private bool HandlerHasFailed = false;
         private string FootnoteReport = "unused";
-        private string Mirror = "";
 
         static string[] Scopes = { DriveService.Scope.DriveReadonly };
         static string ApplicationName = "WNS App";
@@ -157,11 +155,8 @@ namespace WnsHandler.GDrive
                         {
                             NumberOfUpdates = cnt,
                             UpdateFinished = fileModifyDates[i],
-                            ParentUrl = (
-                                Mirror == ""
-                                ? "https://drive.google.com/drive/folders/" + parentDatesListPair.Key
-                                : Mirror + "/" + WebUtility.UrlEncode(DirectoryNames[parentDatesListPair.Key]).Replace("+", "%20").Replace("%2F", "%EF%BC%8F").Replace("%20%08%20", "/") + "/"
-                            ),
+                            ParentUrl = "https://drive.google.com/drive/folders/" + parentDatesListPair.Key,
+                            ParentPathMir = DirectoryNames[parentDatesListPair.Key],
                             ParentPath = DirectoryNames[parentDatesListPair.Key]
                                 .Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;")
                                 .Replace(" \b ", " / "),
@@ -199,54 +194,18 @@ namespace WnsHandler.GDrive
             Report = new List<ReportRecord>();
             try
             {
-                var pieces = parent.Split(new[] { ' ' }, 3);
-                Mirror = "";
-                if (pieces.Length > 2)
-                {
-                    var prms = parent.Split(new[] { ' ' });
-                    bool seenRealParam = false;
-                    int paramIdx = 0;
-                    foreach (var param in prms)
-                    {
-                        if (param.Contains("-mirror="))
-                        {
-                            Mirror = param.Replace("-mirror=", "");
-                            Console.WriteLine("GDrive :: Mirror = " + Mirror);
-                            seenRealParam = true;
-                        }
-                        if (!seenRealParam && paramIdx > 1)
-                        {
-                            pieces[1] += " " + param;
-                        }
-                        ++paramIdx;
-                    }
-                }
-                if (pieces[0].Contains("$"))
-                {
-                    string hashFileName = Path.Combine(ExecutableDirectory, pieces[0].Replace("$", ""));
-                    var hashFile = System.IO.File.ReadAllLines(hashFileName);
-                    pieces[0] = hashFile[0];
-                    Console.WriteLine("GDrive :: real hash = " + pieces[0]);
-                }
+                var pieces = parent.Split(new[] { ' ' }, 2);
                 Console.WriteLine("GDrive :: Processing " + pieces[0]);
                 DirectoryNames[pieces[0]] = "";//pieces[1]; // root name
-                if (Mirror == "")
-                    Root = new RootRecord
-                    {
-                        Rec =
-                            "<a class=\"rootl\" href=\"https://drive.google.com/drive/folders/"
-                            + pieces[0] + "\">" + pieces[1] + "</a> /",
-                        UniqId = pieces[0]
-                    };
-                else
-                    Root = new RootRecord
-                    {
-                        Rec =
-                            "<a class=\"rootl\" href=\"" + Mirror + "/"
-                            + "\">" + pieces[1] + "</a> /",
-                        UniqId = pieces[0]
-                    };
-
+                Root = new RootRecord
+                {
+                    Rec =
+                        "<a class=\"rootl\" href=\"https://drive.google.com/drive/folders/"
+                        + pieces[0] + "\">" + pieces[1] + "</a> /",
+                    Label = pieces[1],
+                    UniqId = pieces[0]
+                };
+                
                 DbgFilename = pieces[1];
                 DbgList = new List<string>();
 
@@ -343,12 +302,17 @@ namespace WnsHandler.GDrive
 
         public string GetVersion()
         {
-            return "v.1.8";
+            return "v.1.9";
         }
 
         public bool HasFailed()
         {
             return HandlerHasFailed;
+        }
+
+        public bool CanBeMirrored()
+        {
+            return true;
         }
 
         public int GetParallelInstancesCount()

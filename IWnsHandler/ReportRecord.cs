@@ -8,6 +8,7 @@ namespace WhatsNewShared
     {
         public string Rec = ""; // html representation of the record's root; must be neigther null nor empty
         public string UniqId = ""; // arbitrary string uniquely identifying the root; must be non-null
+        public string Label = ""; // drive name for building Rec for mirrored drives; must be non-null
     }
 
     [Flags]
@@ -23,6 +24,7 @@ namespace WhatsNewShared
         public List<DateTime> FileDateTimes = new List<DateTime>(); // individual files' update times
         public string ParentUrl = "#";
         public string ParentPath = "#";
+        public string ParentPathMir = "#"; // " \b " separated path used for mirrored drives
         public int NumberOfUpdates = -1;
         public ReportFlags Flags = ReportFlags.None;
         public RootRecord RootRec; // reference to a root record object
