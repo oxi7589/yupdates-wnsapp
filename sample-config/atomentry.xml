@@ -1,0 +1,8 @@
+﻿  <entry>
+    <title>New records</title>
+    <link href="https://yupdates.local/latest.htm?rf=feed-{0}"/>
+    <id>https://yupdates.local/latest.htm?rf=feed-{0}</id>
+    <updated>{1}</updated>
+    <author><name>wnsapp</name></author>
+    <summary type="html"><![CDATA[{2}]]></summary>
+  </entry>

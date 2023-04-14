@@ -1,0 +1,50 @@
+﻿</main>
+<br>
+</div>
+
+<!-- footer 1 -->
+<div class="footer w3-bar w3-grey">
+<div class="w3-bar-item" style="max-width:100%;">
+
+<div><a onclick="toggleSection('drives-list')" href="javascript:">Show checked drives list</a></div>
+<div id="drives-list" class="w3-container w3-light-grey w3-hide">
+<div style="width:100%;max-height:150px;display:block;overflow:scroll;" class="w3-small">
+<pre>Folders checked:
+{0}</pre>
+</div>
+</div>
+Last updated: <span class="repDate">{1}</span>.<br>
+<div class="w3-small">
+{2}
+</div>
+
+</div>
+</div>
+
+<!-- footer 2 -->
+<div class="footer w3-bar w3-black">
+	<div class="hackacat">🐱‍💻</div>
+</div>
+<!-- end of footer -->
+
+<script type="text/javascript">
+moment.locale(window.navigator.userLanguage || window.navigator.language);
+var dd = document.getElementsByClassName("repDate");
+for (var i = 0; i<dd.length;i++)
+{{ 
+	dd[i].textContent = moment.utc(dd[i].innerHTML).local().format('L LT');
+}}
+</script>
+<script>
+function toggleSection(id) {{
+  var x = document.getElementById(id);
+  if (x.className.indexOf("w3-show") == -1) {{
+    x.className += " w3-show";
+  }} else {{ 
+    x.className = x.className.replace(" w3-show", "");
+  }}
+}}
+</script>
+
+</body>
+</html>
