@@ -1,0 +1,39 @@
+﻿<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="wnsapp/1.x">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<style type="text/css">
+	html     { height: 100% }
+	body     { height: 100%; background-color: #eee; display: flex; flex-direction: column; height: 100%; }
+        .header       { flex: 0 0 auto; }
+        .main-content { flex: 1 0 auto; }
+        .footer       { flex: 0 0 auto; }
+        /* updates page specific */
+	.repLine                { display:block; width:100%; }
+	.repLine:nth-child(odd) { background:#e4e4e4; background: linear-gradient(to right, rgba(0, 0, 0, 0.05) 75%, rgba(0,0,0,0)); }
+	.repThick { max-height:150px; display:block; overflow-y:scroll; background-color:#ddd; }
+	.hackacat { font-family:apple color emoji,segoe ui emoji,notocoloremoji,segoe ui symbol,android emoji,emojisymbols,emojione mozilla }
+</style>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment-with-locales.js"></script>
+<title>Drives Updates</title>
+
+</head>
+
+<body>
+
+<!-- navbar -->
+<div class="header w3-bar w3-black">
+	<a href="/" class="w3-bar-item w3-button w3-light-grey">Updates</a>
+</div>
+<!-- end of navbar -->
+
+<div class="main-content w3-container">
+
+<main>
+
+<h1>Drives Updates</h1>
+
+<!--<div class="w3-panel w3-grey"><p>Note: no notes</p></div>-->
